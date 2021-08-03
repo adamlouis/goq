@@ -15,8 +15,8 @@ objects:
     CreatedAt: string
     UpdatedAt: string
   ListJobsQueryParams:
-    Where: interface{}
-    OrderBy: "[]interface{}"
+    Where: string
+    OrderBy: string
     PageSize: int
     PageToken: string
   ListJobsResponse:
