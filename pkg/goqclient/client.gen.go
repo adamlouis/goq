@@ -25,8 +25,8 @@ type Client interface {
 	ClaimSomeJob(ctx context.Context, body *goqmodel.ClaimSomeJobRequest) (*goqmodel.Job, int, error)
 	ClaimJob(ctx context.Context, pathParams *goqmodel.ClaimJobPathParams) (*goqmodel.Job, int, error)
 	ReleaseJob(ctx context.Context, pathParams *goqmodel.ReleaseJobPathParams) (*goqmodel.Job, int, error)
-	SetJobSuccess(ctx context.Context, pathParams *goqmodel.SetJobSuccessPathParams) (*goqmodel.Job, int, error)
-	SetJobError(ctx context.Context, pathParams *goqmodel.SetJobErrorPathParams) (*goqmodel.Job, int, error)
+	SetJobSuccess(ctx context.Context, pathParams *goqmodel.SetJobSuccessPathParams, body *goqmodel.Job) (*goqmodel.Job, int, error)
+	SetJobError(ctx context.Context, pathParams *goqmodel.SetJobErrorPathParams, body *goqmodel.Job) (*goqmodel.Job, int, error)
 }
 
 func NewHTTPClient(baseURL string) Client {
@@ -50,7 +50,7 @@ func (c *client) ListJobs(ctx context.Context, queryParams *goqmodel.ListJobsQue
 	u.Query().Add("page_size", strconv.Itoa(queryParams.PageSize))
 	u.Query().Add("page_token", queryParams.PageToken)
 	var requestBody io.Reader
-	req, err := http.NewRequest(" + golangMethodByMethod[route.Method] + ", u.String(), requestBody)
+	req, err := http.NewRequest(http.MethodGet, u.String(), requestBody)
 	if err != nil {
 		return nil, -1, err
 	}
@@ -84,7 +84,7 @@ func (c *client) GetJob(ctx context.Context, pathParams *goqmodel.GetJobPathPara
 		return nil, -1, err
 	}
 	var requestBody io.Reader
-	req, err := http.NewRequest(" + golangMethodByMethod[route.Method] + ", u.String(), requestBody)
+	req, err := http.NewRequest(http.MethodGet, u.String(), requestBody)
 	if err != nil {
 		return nil, -1, err
 	}
@@ -118,7 +118,7 @@ func (c *client) DeleteJob(ctx context.Context, pathParams *goqmodel.DeleteJobPa
 		return -1, err
 	}
 	var requestBody io.Reader
-	req, err := http.NewRequest(" + golangMethodByMethod[route.Method] + ", u.String(), requestBody)
+	req, err := http.NewRequest(http.MethodDelete, u.String(), requestBody)
 	if err != nil {
 		return -1, err
 	}
@@ -149,7 +149,7 @@ func (c *client) QueueJob(ctx context.Context, body *goqmodel.Job) (*goqmodel.Jo
 	} else {
 		requestBody = bytes.NewBuffer(jsonBytes)
 	}
-	req, err := http.NewRequest(" + golangMethodByMethod[route.Method] + ", u.String(), requestBody)
+	req, err := http.NewRequest(http.MethodPost, u.String(), requestBody)
 	if err != nil {
 		return nil, -1, err
 	}
@@ -188,7 +188,7 @@ func (c *client) ClaimSomeJob(ctx context.Context, body *goqmodel.ClaimSomeJobRe
 	} else {
 		requestBody = bytes.NewBuffer(jsonBytes)
 	}
-	req, err := http.NewRequest(" + golangMethodByMethod[route.Method] + ", u.String(), requestBody)
+	req, err := http.NewRequest(http.MethodPost, u.String(), requestBody)
 	if err != nil {
 		return nil, -1, err
 	}
@@ -222,7 +222,7 @@ func (c *client) ClaimJob(ctx context.Context, pathParams *goqmodel.ClaimJobPath
 		return nil, -1, err
 	}
 	var requestBody io.Reader
-	req, err := http.NewRequest(" + golangMethodByMethod[route.Method] + ", u.String(), requestBody)
+	req, err := http.NewRequest(http.MethodPost, u.String(), requestBody)
 	if err != nil {
 		return nil, -1, err
 	}
@@ -256,7 +256,7 @@ func (c *client) ReleaseJob(ctx context.Context, pathParams *goqmodel.ReleaseJob
 		return nil, -1, err
 	}
 	var requestBody io.Reader
-	req, err := http.NewRequest(" + golangMethodByMethod[route.Method] + ", u.String(), requestBody)
+	req, err := http.NewRequest(http.MethodPost, u.String(), requestBody)
 	if err != nil {
 		return nil, -1, err
 	}
@@ -283,14 +283,19 @@ func (c *client) ReleaseJob(ctx context.Context, pathParams *goqmodel.ReleaseJob
 	}
 	return &respBody, resp.StatusCode, nil
 }
-func (c *client) SetJobSuccess(ctx context.Context, pathParams *goqmodel.SetJobSuccessPathParams) (*goqmodel.Job, int, error) {
+func (c *client) SetJobSuccess(ctx context.Context, pathParams *goqmodel.SetJobSuccessPathParams, body *goqmodel.Job) (*goqmodel.Job, int, error) {
 	client := &http.Client{}
 	u, err := url.Parse(fmt.Sprintf("%s/jobs/%v:success", c.baseURL, pathParams.JobID))
 	if err != nil {
 		return nil, -1, err
 	}
 	var requestBody io.Reader
-	req, err := http.NewRequest(" + golangMethodByMethod[route.Method] + ", u.String(), requestBody)
+	if jsonBytes, err := json.Marshal(body); err != nil {
+		return nil, -1, err
+	} else {
+		requestBody = bytes.NewBuffer(jsonBytes)
+	}
+	req, err := http.NewRequest(http.MethodPost, u.String(), requestBody)
 	if err != nil {
 		return nil, -1, err
 	}
@@ -317,14 +322,19 @@ func (c *client) SetJobSuccess(ctx context.Context, pathParams *goqmodel.SetJobS
 	}
 	return &respBody, resp.StatusCode, nil
 }
-func (c *client) SetJobError(ctx context.Context, pathParams *goqmodel.SetJobErrorPathParams) (*goqmodel.Job, int, error) {
+func (c *client) SetJobError(ctx context.Context, pathParams *goqmodel.SetJobErrorPathParams, body *goqmodel.Job) (*goqmodel.Job, int, error) {
 	client := &http.Client{}
 	u, err := url.Parse(fmt.Sprintf("%s/jobs/%v:error", c.baseURL, pathParams.JobID))
 	if err != nil {
 		return nil, -1, err
 	}
 	var requestBody io.Reader
-	req, err := http.NewRequest(" + golangMethodByMethod[route.Method] + ", u.String(), requestBody)
+	if jsonBytes, err := json.Marshal(body); err != nil {
+		return nil, -1, err
+	} else {
+		requestBody = bytes.NewBuffer(jsonBytes)
+	}
+	req, err := http.NewRequest(http.MethodPost, u.String(), requestBody)
 	if err != nil {
 		return nil, -1, err
 	}

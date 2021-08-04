@@ -248,7 +248,7 @@ func (jr *jobRepo) Release(ctx context.Context, id string) (*goqmodel.Job, error
 
 	return jr.Get(ctx, id)
 }
-func (jr *jobRepo) Success(ctx context.Context, id string) (*goqmodel.Job, error) {
+func (jr *jobRepo) Success(ctx context.Context, id string, output goqmodel.JSONObject) (*goqmodel.Job, error) {
 	j, err := jr.Get(ctx, id)
 	if err != nil {
 		return nil, err
@@ -259,19 +259,19 @@ func (jr *jobRepo) Success(ctx context.Context, id string) (*goqmodel.Job, error
 	}
 	j.Status = string(job.JobStatusSuccess)
 
-	output, err := json.Marshal(j.Output)
+	ob, err := json.Marshal(output)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = jr.db.Exec(`UPDATE job SET status = ?, output = ?, succeed_at = CURRENT_TIMESTAMP WHERE id = ?`, job.JobStatusSuccess, output, j.ID)
+	_, err = jr.db.Exec(`UPDATE job SET status = ?, output = ?, succeed_at = CURRENT_TIMESTAMP WHERE id = ?`, job.JobStatusSuccess, ob, j.ID)
 	if err != nil {
 		return nil, err
 	}
 
 	return jr.Get(ctx, id)
 }
-func (jr *jobRepo) Error(ctx context.Context, id string) (*goqmodel.Job, error) {
+func (jr *jobRepo) Error(ctx context.Context, id string, output goqmodel.JSONObject) (*goqmodel.Job, error) {
 	j, err := jr.Get(ctx, id)
 	if err != nil {
 		return nil, err
@@ -282,12 +282,12 @@ func (jr *jobRepo) Error(ctx context.Context, id string) (*goqmodel.Job, error) 
 	}
 	j.Status = string(job.JobStatusError)
 
-	output, err := json.Marshal(j.Output)
+	ob, err := json.Marshal(output)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = jr.db.Exec(`UPDATE job SET status = ?, output = ?, errored_at = CURRENT_TIMESTAMP WHERE id = ?`, job.JobStatusError, output, j.ID)
+	_, err = jr.db.Exec(`UPDATE job SET status = ?, output = ?, errored_at = CURRENT_TIMESTAMP WHERE id = ?`, job.JobStatusError, ob, j.ID)
 	if err != nil {
 		return nil, err
 	}

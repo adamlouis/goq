@@ -58,8 +58,10 @@ routes:
   /jobs/{jobID}:success:
     POST:
       name: SetJobSuccess
+      request_body: "*Job"
       response_body: "*Job"
   /jobs/{jobID}:error:
     POST:
       name: SetJobError
+      request_body: "*Job"
       response_body: "*Job"

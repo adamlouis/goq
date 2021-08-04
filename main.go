@@ -112,7 +112,8 @@ func main() {
 	}
 
 	jsonlog.Log("type", "SERVER_STARTED", "port", c.ServerPort)
-	srv.ListenAndServe()
+	log.Fatal(srv.ListenAndServe())
+
 }
 
 func loggerMiddleware(next http.Handler) http.Handler {

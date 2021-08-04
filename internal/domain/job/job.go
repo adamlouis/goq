@@ -15,8 +15,8 @@ type Repository interface {
 	Queue(ctx context.Context, j *goqmodel.Job) (*goqmodel.Job, error)
 	Claim(ctx context.Context, opts *ClaimOptions) (*goqmodel.Job, error)
 	Release(ctx context.Context, id string) (*goqmodel.Job, error)
-	Success(ctx context.Context, id string) (*goqmodel.Job, error)
-	Error(ctx context.Context, id string) (*goqmodel.Job, error)
+	Success(ctx context.Context, id string, output goqmodel.JSONObject) (*goqmodel.Job, error)
+	Error(ctx context.Context, id string, output goqmodel.JSONObject) (*goqmodel.Job, error)
 }
 
 type Reporter interface {

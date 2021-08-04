@@ -33,8 +33,8 @@ type APIHandler interface {
 	ClaimSomeJob(ctx context.Context, body *goqmodel.ClaimSomeJobRequest) (*goqmodel.Job, error)
 	ClaimJob(ctx context.Context, pathParams *goqmodel.ClaimJobPathParams) (*goqmodel.Job, error)
 	ReleaseJob(ctx context.Context, pathParams *goqmodel.ReleaseJobPathParams) (*goqmodel.Job, error)
-	SetJobSuccess(ctx context.Context, pathParams *goqmodel.SetJobSuccessPathParams) (*goqmodel.Job, error)
-	SetJobError(ctx context.Context, pathParams *goqmodel.SetJobErrorPathParams) (*goqmodel.Job, error)
+	SetJobSuccess(ctx context.Context, pathParams *goqmodel.SetJobSuccessPathParams, body *goqmodel.Job) (*goqmodel.Job, error)
+	SetJobError(ctx context.Context, pathParams *goqmodel.SetJobErrorPathParams, body *goqmodel.Job) (*goqmodel.Job, error)
 }
 
 func RegisterRouter(apiHandler APIHandler, r *mux.Router, c ErrorCoder) {
@@ -234,7 +234,12 @@ func (h *httpHandler) SetJobSuccess(w http.ResponseWriter, req *http.Request) {
 	pathParams := goqmodel.SetJobSuccessPathParams{
 		JobID: jobID,
 	}
-	r, err := h.apiHandler.SetJobSuccess(req.Context(), &pathParams)
+	var requestBody goqmodel.Job
+	if err := json.NewDecoder(req.Body).Decode(&requestBody); err != nil {
+		sendErrorWithCode(w, http.StatusBadRequest, err)
+		return
+	}
+	r, err := h.apiHandler.SetJobSuccess(req.Context(), &pathParams, &requestBody)
 	if err != nil {
 		h.sendError(w, err)
 		return
@@ -251,7 +256,12 @@ func (h *httpHandler) SetJobError(w http.ResponseWriter, req *http.Request) {
 	pathParams := goqmodel.SetJobErrorPathParams{
 		JobID: jobID,
 	}
-	r, err := h.apiHandler.SetJobError(req.Context(), &pathParams)
+	var requestBody goqmodel.Job
+	if err := json.NewDecoder(req.Body).Decode(&requestBody); err != nil {
+		sendErrorWithCode(w, http.StatusBadRequest, err)
+		return
+	}
+	r, err := h.apiHandler.SetJobError(req.Context(), &pathParams, &requestBody)
 	if err != nil {
 		h.sendError(w, err)
 		return
