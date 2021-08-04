@@ -120,8 +120,8 @@ func main() {
 	srv := &http.Server{
 		Handler:      rootRouter,
 		Addr:         addr,
-		WriteTimeout: 1 * time.Second,
-		ReadTimeout:  1 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		ReadTimeout:  10 * time.Second,
 	}
 
 	jsonlog.Log("type", "SERVER_STARTED", "port", c.ServerPort)
