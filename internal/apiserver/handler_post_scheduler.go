@@ -22,7 +22,7 @@ func (h *hdl) PostScheduler(ctx context.Context, body *goqmodel.Scheduler) (*goq
 		return nil, err
 	}
 
-	// h.onUpdateScheduler(body.ID)
+	h.onUpdateScheduler(body.ID)
 
 	return out, nil
 }

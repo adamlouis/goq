@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"sort"
 	"text/template"
 
 	"github.com/adamlouis/goq/internal/apiserver"
@@ -41,12 +42,17 @@ type SchedulerTmpl struct {
 	InputStr string
 }
 
+type JobTmpl struct {
+	*goqmodel.Job
+	InputStr, OutputStr string
+}
+
 type pageData struct {
 	Title        string
 	JobStr       string
 	SchedulerStr string
 	Pivot        [][]string
-	Jobs         []*goqmodel.Job
+	Jobs         []*JobTmpl
 	Schedulers   []*SchedulerTmpl
 }
 
@@ -73,8 +79,6 @@ func (w *whs) Home(wrt http.ResponseWriter, req *http.Request) {
 		jsonlog.Log("error", err) // TODO: handle error
 	}
 
-	pivot := [][]string{}
-
 	statusColumns := []job.JobStatus{
 		job.JobStatusQueued,
 		job.JobStatusClaimed,
@@ -86,9 +90,17 @@ func (w *whs) Home(wrt http.ResponseWriter, req *http.Request) {
 	for i, s := range statusColumns {
 		header[i+1] = string(s)
 	}
-	pivot = append(pivot, header)
+	pivot := [][]string{header}
 
+	names := make([]string, len(report))
+	i := 0
 	for name := range report {
+		names[i] = name
+		i += 1
+	}
+	sort.Strings(names)
+
+	for _, name := range names {
 		row := make([]string, 5)
 		row[0] = name
 		for i, s := range statusColumns {
@@ -119,7 +131,7 @@ func (w *whs) Home(wrt http.ResponseWriter, req *http.Request) {
 
 	newTemplate("home.go.html", []string{"templates/common.go.html", "templates/home.go.html"}).Execute(wrt, pageData{
 		Title:      "GOQ",
-		Jobs:       jobs,
+		Jobs:       toJobTmpls(jobs),
 		Pivot:      pivot,
 		Schedulers: toSchedulerTmpls(schedulers),
 	})
@@ -177,6 +189,21 @@ func toSchedulerTmpls(ss []*goqmodel.Scheduler) []*SchedulerTmpl {
 		r[i] = &SchedulerTmpl{
 			Scheduler: ss[i],
 			InputStr:  string(ib),
+		}
+	}
+	return r
+}
+
+func toJobTmpls(js []*goqmodel.Job) []*JobTmpl {
+	r := make([]*JobTmpl, len(js))
+	for i := range js {
+		ib, _ := json.Marshal(js[i].Input)
+		ob, _ := json.Marshal(js[i].Output)
+
+		r[i] = &JobTmpl{
+			Job:       js[i],
+			InputStr:  string(ib),
+			OutputStr: string(ob),
 		}
 	}
 	return r

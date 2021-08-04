@@ -57,7 +57,14 @@
             <th>id</th>
             <th>name</th>
             <th>status</th>
+            {{/*
+            <th>input</th>
+            <th>output</th>
+            */}}
             <th>scheduled_for</th>
+            <th>claimed_at</th>
+            <th>succeeded_at</th>
+            <th>errored_at</th>
             <th>created_at</th>
             <th>updated_at</th>
           </thead>
@@ -67,7 +74,15 @@
               <td><a href="/jobs/{{ .ID }}">{{ .ID }}</a></td>
               <td>{{ .Name }}</td>
               <td>{{ .Status }}</td>
+              {{/*
+              <td><pre>{{ .InputStr }}</pre></td>
+              */}} {{/*
+              <td><pre>{{ .OutputStr }}</pre></td>
+              */}}
               <td>{{ .ScheduledFor }}</td>
+              <td>{{ .ClaimedAt }}</td>
+              <td>{{ .SucceededAt }}</td>
+              <td>{{ .ErroredAt }}</td>
               <td>{{ .CreatedAt }}</td>
               <td>{{ .UpdatedAt }}</td>
             </tr>

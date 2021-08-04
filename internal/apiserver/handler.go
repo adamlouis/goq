@@ -15,7 +15,7 @@ import (
 func NewAPIHandler(ctx context.Context, jobDB, schedulerDB *sqlx.DB) APIHandler {
 	updatedSchedulerChan := make(chan string)
 
-	// runScheduler(ctx, jobDB, schedulerDB, updatedSchedulerChan)
+	runScheduler(ctx, jobDB, schedulerDB, updatedSchedulerChan)
 
 	return &hdl{
 		jobDB:                jobDB,
