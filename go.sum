@@ -4,6 +4,8 @@ github.com/adamlouis/gsg v0.0.0-20210803231654-e883ecf06b5a h1:zrv7KOTA5f5ZKsNCY
 github.com/adamlouis/gsg v0.0.0-20210803231654-e883ecf06b5a/go.mod h1:7vhM/l7WDlkU57opvX1pD0ZqKmQ6IWrvnWCP9Rca5us=
 github.com/adamlouis/gsg v0.0.0-20210804060304-29fd7c46e22b h1:8ET+kTVohzSKUhlqGk5dhOFCEBA1sKHqqd4X6ai8Y5o=
 github.com/adamlouis/gsg v0.0.0-20210804060304-29fd7c46e22b/go.mod h1:7vhM/l7WDlkU57opvX1pD0ZqKmQ6IWrvnWCP9Rca5us=
+github.com/adamlouis/gsg v0.0.0-20210804151300-ab81de5ecf06 h1:gemGwYOSn5kyZfFI+HhBJvshfyD5pXQ7fcm59oQtQK4=
+github.com/adamlouis/gsg v0.0.0-20210804151300-ab81de5ecf06/go.mod h1:7vhM/l7WDlkU57opvX1pD0ZqKmQ6IWrvnWCP9Rca5us=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/go-sql-driver/mysql v1.5.0 h1:ozyZYNQW3x3HtqT1jira07DN2PArx2v7/mN66gGcHOs=
 github.com/go-sql-driver/mysql v1.5.0/go.mod h1:DCzpHaOWr8IXmIStZouvnhqoel9Qv2LBy8hT2VhHyBg=

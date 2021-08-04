@@ -11,6 +11,7 @@ import (
 	"github.com/adamlouis/goq/pkg/goqmodel"
 	"github.com/gorilla/mux"
 	"net/http"
+	"reflect"
 	"strconv"
 )
 
@@ -89,7 +90,7 @@ func sendErrorWithCode(w http.ResponseWriter, code int, err error) {
 func sendOK(w http.ResponseWriter, body interface{}) {
 	w.Header().Add("Content-Type", "application/json")
 	code := http.StatusOK
-	if body == nil {
+	if reflect.ValueOf(body).IsNil() {
 		code = http.StatusNoContent
 	}
 	w.WriteHeader(code)

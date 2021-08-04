@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/Masterminds/squirrel v1.5.0 // indirect
-	github.com/adamlouis/gsg v0.0.0-20210804060304-29fd7c46e22b // indirect
+	github.com/adamlouis/gsg v0.0.0-20210804151300-ab81de5ecf06 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/gorilla/mux v1.8.0
 	github.com/jmoiron/sqlx v1.3.4
