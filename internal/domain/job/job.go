@@ -19,6 +19,11 @@ type Repository interface {
 	Error(ctx context.Context, id string) (*goqmodel.Job, error)
 }
 
+type Reporter interface {
+	GetCountByStatus(ctx context.Context) (map[JobStatus]int64, error)
+	GetCountByName(ctx context.Context) (map[string]int64, error)
+}
+
 type JobStatus string
 
 const (

@@ -46,6 +46,37 @@
   <body>
     <div>
       <h1><a href="/">{{ .Title }}!</a></h1>
+      <hr />
+      <table>
+        <thead>
+          <th>status</th>
+          <th>count</th>
+        </thead>
+        <tbody>
+          {{ range $status, $count := .JobCountByStatus }}
+          <tr>
+            <td>{{ $status }}</td>
+            <td>{{ $count }}</td>
+          </tr>
+          {{ end }}
+        </tbody>
+      </table>
+      <hr />
+      <table>
+        <thead>
+          <th>name</th>
+          <th>count</th>
+        </thead>
+        <tbody>
+          {{ range $name, $count := .JobCountByName }}
+          <tr>
+            <td>{{ $name }}</td>
+            <td>{{ $count }}</td>
+          </tr>
+          {{ end }}
+        </tbody>
+      </table>
+      <hr />
       <table>
         <thead>
           <th>id</th>
@@ -58,7 +89,7 @@
         <tbody>
           {{ range .Jobs }}
           <tr>
-            <td><a target="_blank" href="/api/jobs/{{ .ID }}">{{ .ID }}</a></td>
+            <td><a href="/jobs/{{ .ID }}">{{ .ID }}</a></td>
             <td>{{ .Name }}</td>
             <td>{{ .Status }}</td>
             <td>{{ .ScheduledFor }}</td>
@@ -68,6 +99,7 @@
           {{ end }}
         </tbody>
       </table>
+      <hr />
     </div>
   </body>
 </html>

@@ -333,9 +333,11 @@ func jobRowToJob(r *jobRow) (*goqmodel.Job, error) {
 	}
 
 	var output map[string]interface{}
-	err = json.Unmarshal(r.Output, &output)
-	if err != nil {
-		return nil, err
+	if r.Output != nil {
+		err = json.Unmarshal(r.Output, &output)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &goqmodel.Job{

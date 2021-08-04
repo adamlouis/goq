@@ -3,7 +3,10 @@ CREATE TABLE IF NOT EXISTS job(
     name TEXT NOT NULL CHECK(name <> ''),
     status TEXT NOT NULL CHECK(status <> ''),
     input TEXT NOT NULL CHECK(json_type(input) == 'object'),
-    output TEXT NOT NULL DEFAULT '{}' CHECK(json_type(output) == 'object'),
+    output TEXT NULL CHECK(
+        json_type(output) == 'object'
+        OR output IS NULL
+    ),
     succeed_at TEXT NULL,
     errored_at TEXT NULL,
     claimed_at TEXT NULL,

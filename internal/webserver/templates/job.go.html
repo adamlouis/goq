@@ -41,14 +41,24 @@
       tr:hover {
         background-color: #ddd;
       }
+
+      pre {
+        white-space: pre-wrap; /* Since CSS 2.1 */
+        white-space: -moz-pre-wrap; /* Mozilla, since 1999 */
+        white-space: -pre-wrap; /* Opera 4-6 */
+        white-space: -o-pre-wrap; /* Opera 7 */
+        word-wrap: break-word; /* Internet Explorer 5.5+ */
+        padding: 8px 16px;
+        background-color: #eee;
+      }
     </style>
   </head>
   <body>
     <div>
       <h1><a href="/">{{ .Title }}!</a></h1>
-      <ul>
-        <li><a href="/jobs">jobs</a></li>
-      </ul>
+      <hr />
+      <pre>{{ .JobStr }}</pre>
+      <hr />
     </div>
   </body>
 </html>

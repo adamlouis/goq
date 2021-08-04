@@ -94,12 +94,13 @@ func main() {
 	}
 
 	rootRouter := mux.NewRouter()
+	rootRouter.Use(loggerMiddleware)
 
 	apiHdl := apiserver.NewAPIHandler(jobDB)
 	apiRouter := rootRouter.PathPrefix("/api").Subrouter()
 	apiserver.RegisterRouter(apiHdl, apiRouter, apiserver.GetErrorCode)
 
-	webHdl := webserver.NewWebHandler(apiHdl)
+	webHdl := webserver.NewWebHandler(apiHdl, jobsqlite3.NewJobReporter(jobDB))
 	webserver.RegisterRouter(webHdl, rootRouter)
 
 	addr := fmt.Sprintf(":%d", c.ServerPort)
@@ -112,4 +113,21 @@ func main() {
 
 	jsonlog.Log("type", "SERVER_STARTED", "port", c.ServerPort)
 	srv.ListenAndServe()
+}
+
+func loggerMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		now := time.Now()
+		next.ServeHTTP(w, r)
+		// TODO: do w/ tracing / opentelemetry, start a span, pass down context, etc
+		// TODO: produce just 1 structured event per req w/ all metadata
+		jsonlog.Log(
+			"name", fmt.Sprintf("%s:%s", r.Method, r.URL.Path),
+			"type", "REQUEST",
+			"method", r.Method,
+			"duration_ms", time.Since(now)/time.Millisecond,
+			"path", r.URL.Path,
+			"time", time.Now().Format(time.RFC3339),
+		)
+	})
 }
