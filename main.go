@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
@@ -13,6 +14,7 @@ import (
 	"github.com/adamlouis/goq/internal/job/jobsqlite3"
 	"github.com/adamlouis/goq/internal/pkg/jsonlog"
 	"github.com/adamlouis/goq/internal/pkg/sqlite3util"
+	"github.com/adamlouis/goq/internal/scheduler/schedulersqlite3"
 	"github.com/adamlouis/goq/internal/webserver"
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
@@ -77,6 +79,7 @@ func newDB(c *config, path string) (*sqlx.DB, error) {
 }
 
 func main() {
+	ctx := context.Background()
 
 	c, err := loadConfig()
 	if err != nil {
@@ -93,10 +96,20 @@ func main() {
 		log.Fatal(err)
 	}
 
+	schedulerDB, err := newDB(c, "./db/scheduler.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer schedulerDB.Close()
+
+	if err := sqlite3util.NewMigrator(schedulerDB, schedulersqlite3.MigrationFS).Up(); err != nil {
+		log.Fatal(err)
+	}
+
 	rootRouter := mux.NewRouter()
 	rootRouter.Use(loggerMiddleware)
 
-	apiHdl := apiserver.NewAPIHandler(jobDB)
+	apiHdl := apiserver.NewAPIHandler(ctx, jobDB, schedulerDB)
 	apiRouter := rootRouter.PathPrefix("/api").Subrouter()
 	apiserver.RegisterRouter(apiHdl, apiRouter, apiserver.GetErrorCode)
 
@@ -107,8 +120,8 @@ func main() {
 	srv := &http.Server{
 		Handler:      rootRouter,
 		Addr:         addr,
-		WriteTimeout: 15 * time.Second,
-		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 1 * time.Second,
+		ReadTimeout:  1 * time.Second,
 	}
 
 	jsonlog.Log("type", "SERVER_STARTED", "port", c.ServerPort)

@@ -118,7 +118,7 @@ func (jr *jobRepo) List(ctx context.Context, args *goqmodel.ListJobsQueryParams)
 		StatementBuilder.
 		Select("id, name, status, input, output, succeed_at, errored_at, claimed_at, created_at, updated_at, scheduled_for").
 		From("job").
-		OrderBy("created_at ASC, id ASC").
+		OrderBy("created_at desc, id ASC").
 		Limit(uint64(sz) + 1) // get n+1 so we know if there's a next page
 
 	offset := uint64(0)

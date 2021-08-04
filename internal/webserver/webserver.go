@@ -20,8 +20,8 @@ var templatesFS embed.FS
 
 type WebHandler interface {
 	Home(w http.ResponseWriter, req *http.Request)
-	Jobs(w http.ResponseWriter, req *http.Request)
 	Job(w http.ResponseWriter, req *http.Request)
+	Scheduler(w http.ResponseWriter, req *http.Request)
 }
 
 func NewWebHandler(apiHandler apiserver.APIHandler, reporter job.Reporter) WebHandler {
@@ -36,13 +36,18 @@ type whs struct {
 	reporter   job.Reporter
 }
 
+type SchedulerTmpl struct {
+	*goqmodel.Scheduler
+	InputStr string
+}
+
 type pageData struct {
-	Title            string
-	JobStr           string
-	Job              *goqmodel.Job
-	Jobs             []*goqmodel.Job
-	JobCountByName   map[string]int64
-	JobCountByStatus map[job.JobStatus]int64
+	Title        string
+	JobStr       string
+	SchedulerStr string
+	Pivot        [][]string
+	Jobs         []*goqmodel.Job
+	Schedulers   []*SchedulerTmpl
 }
 
 func newTemplate(name string, patterns []string) *template.Template {
@@ -58,40 +63,65 @@ func newTemplate(name string, patterns []string) *template.Template {
 
 func RegisterRouter(wh WebHandler, r *mux.Router) {
 	r.Handle("/", http.HandlerFunc(wh.Home)).Methods(http.MethodGet)
-	r.Handle("/jobs", http.HandlerFunc(wh.Jobs)).Methods(http.MethodGet)
 	r.Handle("/jobs/{jobID}", http.HandlerFunc(wh.Job)).Methods(http.MethodGet)
+	r.Handle("/schedulers/{schedulerID}", http.HandlerFunc(wh.Scheduler)).Methods(http.MethodGet)
 }
 
 func (w *whs) Home(wrt http.ResponseWriter, req *http.Request) {
-	w.Jobs(wrt, req)
-}
-
-func (w *whs) Jobs(wrt http.ResponseWriter, req *http.Request) {
-	bn, err := w.reporter.GetCountByName(req.Context())
+	report, err := w.reporter.GetCountByNameByStatus(req.Context())
 	if err != nil {
 		jsonlog.Log("error", err) // TODO: handle error
 	}
-	bs, err := w.reporter.GetCountByStatus(req.Context())
-	if err != nil {
-		jsonlog.Log("error", err) // TODO: handle error
+
+	pivot := [][]string{}
+
+	statusColumns := []job.JobStatus{
+		job.JobStatusQueued,
+		job.JobStatusClaimed,
+		job.JobStatusSuccess,
+		job.JobStatusError,
+	}
+
+	header := make([]string, 1+len(statusColumns))
+	for i, s := range statusColumns {
+		header[i+1] = string(s)
+	}
+	pivot = append(pivot, header)
+
+	for name := range report {
+		row := make([]string, 5)
+		row[0] = name
+		for i, s := range statusColumns {
+			row[i+1] = fmt.Sprintf("%d", report[name][s])
+		}
+		pivot = append(pivot, row)
 	}
 
 	jobs := []*goqmodel.Job{}
 	r, err := w.apiHandler.ListJobs(req.Context(), &goqmodel.ListJobsQueryParams{
 		PageSize: 100,
 	})
-
 	if err != nil {
 		jsonlog.Log("error", err) // TODO: handle error
 	} else {
 		jobs = r.Jobs
 	}
 
-	newTemplate("jobs.go.html", []string{"templates/jobs.go.html"}).Execute(wrt, pageData{
-		Title:            "GOQ",
-		Jobs:             jobs,
-		JobCountByName:   bn,
-		JobCountByStatus: bs,
+	schedulers := []*goqmodel.Scheduler{}
+	rs, err := w.apiHandler.ListSchedulers(req.Context(), &goqmodel.ListSchedulersRequest{
+		PageSize: 100,
+	})
+	if err != nil {
+		jsonlog.Log("error", err) // TODO: handle error
+	} else {
+		schedulers = rs.Schedulers
+	}
+
+	newTemplate("home.go.html", []string{"templates/common.go.html", "templates/home.go.html"}).Execute(wrt, pageData{
+		Title:      "GOQ",
+		Jobs:       jobs,
+		Pivot:      pivot,
+		Schedulers: toSchedulerTmpls(schedulers),
 	})
 }
 
@@ -111,9 +141,43 @@ func (w *whs) Job(wrt http.ResponseWriter, req *http.Request) {
 		jsonlog.Log("error", err) // TODO: handle error
 	}
 
-	newTemplate("job.go.html", []string{"templates/job.go.html"}).Execute(wrt, pageData{
+	newTemplate("job.go.html", []string{"templates/common.go.html", "templates/job.go.html"}).Execute(wrt, pageData{
 		Title:  "GOQ",
-		Job:    j,
 		JobStr: string(s),
 	})
+}
+
+func (w *whs) Scheduler(wrt http.ResponseWriter, req *http.Request) {
+	schedulerID := mux.Vars(req)["schedulerID"]
+
+	s, err := w.apiHandler.GetScheduler(req.Context(), &goqmodel.GetSchedulerPathParams{
+		SchedulerID: schedulerID,
+	})
+
+	if err != nil {
+		jsonlog.Log("error", err) // TODO: handle error
+	}
+
+	sb, err := json.MarshalIndent(s, "", "  ")
+	if err != nil {
+		jsonlog.Log("error", err) // TODO: handle error
+	}
+
+	newTemplate("scheduler.go.html", []string{"templates/common.go.html", "templates/scheduler.go.html"}).Execute(wrt, pageData{
+		Title:        "GOQ",
+		SchedulerStr: string(sb),
+	})
+}
+
+func toSchedulerTmpls(ss []*goqmodel.Scheduler) []*SchedulerTmpl {
+	r := make([]*SchedulerTmpl, len(ss))
+	for i := range ss {
+		ib, _ := json.Marshal(ss[i].Input)
+
+		r[i] = &SchedulerTmpl{
+			Scheduler: ss[i],
+			InputStr:  string(ib),
+		}
+	}
+	return r
 }

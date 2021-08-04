@@ -7,57 +7,46 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func NewJobReporter(db sqlx.Ext) job.Reporter {
+func NewJobReporter(db *sqlx.DB) job.Reporter {
 	return &jobReporter{
 		db: db,
 	}
 }
 
 type jobReporter struct {
-	db sqlx.Ext
+	db *sqlx.DB
 }
 
-type statusCountRow struct {
+type nameStatusCountRow struct {
+	Name   string `db:"name"`
 	Status string `db:"status"`
 	Count  int64  `db:"c"`
 }
-type nameCountRow struct {
-	Name  string `db:"name"`
-	Count int64  `db:"c"`
-}
 
-func (jr *jobReporter) GetCountByStatus(ctx context.Context) (map[job.JobStatus]int64, error) {
-	rows, err := jr.db.Queryx("SELECT status, count(1) as c FROM job GROUP BY status ORDER BY c")
+func (jr *jobReporter) GetCountByNameByStatus(ctx context.Context) (map[string]map[job.JobStatus]int64, error) {
+	tx, err := jr.db.Beginx()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	rows, err := tx.Queryx("SELECT name, status, count(1) as c FROM job GROUP BY name, status ORDER BY c")
 	if err != nil {
 		return nil, err
 	}
 
-	result := map[job.JobStatus]int64{}
+	result := map[string]map[job.JobStatus]int64{}
 	for rows.Next() {
-		var r statusCountRow
+		var r nameStatusCountRow
 		err = rows.StructScan(&r)
 		if err != nil {
 			return nil, err
 		}
-		result[job.JobStatus(r.Status)] = r.Count
-	}
-	return result, nil
-}
 
-func (jr *jobReporter) GetCountByName(ctx context.Context) (map[string]int64, error) {
-	rows, err := jr.db.Queryx("SELECT name, count(1) as c FROM job GROUP BY name ORDER BY c")
-	if err != nil {
-		return nil, err
-	}
-
-	result := map[string]int64{}
-	for rows.Next() {
-		var r nameCountRow
-		err = rows.StructScan(&r)
-		if err != nil {
-			return nil, err
+		if _, ok := result[r.Name]; !ok {
+			result[r.Name] = map[job.JobStatus]int64{}
 		}
-		result[r.Name] = r.Count
+		result[r.Name][job.JobStatus(r.Status)] = r.Count
 	}
 	return result, nil
 }

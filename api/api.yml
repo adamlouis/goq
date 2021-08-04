@@ -24,6 +24,19 @@ objects:
     NextPageToken: "string"
   ClaimSomeJobRequest:
     Names: "[]string"
+  Scheduler:
+    ID: string
+    Schedule: string
+    JobName: string
+    Input: JSONObject
+    CreatedAt: string
+    UpdatedAt: string
+  ListSchedulersRequest:
+    PageToken: string
+    PageSize: int
+  ListSchedulersResponse:
+    Schedulers: "[]*Scheduler"
+    NextPageToken: string
 
 routes:
   /jobs:
@@ -65,3 +78,22 @@ routes:
       name: SetJobError
       request_body: "*Job"
       response_body: "*Job"
+  /schedulers:
+    GET:
+      name: ListSchedulers
+      query_params: "*ListSchedulersRequest"
+      response_body: "*ListSchedulersResponse"
+    POST:
+      name: PostScheduler
+      request_body: "*Scheduler"
+      response_body: "*Scheduler"
+  /schedulers/{schedulerID}:
+    GET:
+      name: GetScheduler
+      response_body: "*Scheduler"
+    PUT:
+      name: PutScheduler
+      request_body: "*Scheduler"
+      response_body: "*Scheduler"
+    DELETE:
+      name: DeleteScheduler

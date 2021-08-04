@@ -31,6 +31,22 @@ type ListJobsResponse struct {
 type ClaimSomeJobRequest struct {
 	Names []string `json:"names"`
 }
+type Scheduler struct {
+	ID        string     `json:"id"`
+	Schedule  string     `json:"schedule"`
+	JobName   string     `json:"job_name"`
+	Input     JSONObject `json:"input"`
+	CreatedAt string     `json:"created_at"`
+	UpdatedAt string     `json:"updated_at"`
+}
+type ListSchedulersRequest struct {
+	PageToken string `json:"page_token"`
+	PageSize  int    `json:"page_size"`
+}
+type ListSchedulersResponse struct {
+	Schedulers    []*Scheduler `json:"schedulers"`
+	NextPageToken string       `json:"next_page_token"`
+}
 type GetJobPathParams struct {
 	JobID string
 }
@@ -48,4 +64,13 @@ type SetJobSuccessPathParams struct {
 }
 type SetJobErrorPathParams struct {
 	JobID string
+}
+type GetSchedulerPathParams struct {
+	SchedulerID string
+}
+type PutSchedulerPathParams struct {
+	SchedulerID string
+}
+type DeleteSchedulerPathParams struct {
+	SchedulerID string
 }

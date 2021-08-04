@@ -25,6 +25,11 @@ type HTTPHandler interface {
 	ReleaseJob(w http.ResponseWriter, req *http.Request)
 	SetJobSuccess(w http.ResponseWriter, req *http.Request)
 	SetJobError(w http.ResponseWriter, req *http.Request)
+	ListSchedulers(w http.ResponseWriter, req *http.Request)
+	PostScheduler(w http.ResponseWriter, req *http.Request)
+	GetScheduler(w http.ResponseWriter, req *http.Request)
+	PutScheduler(w http.ResponseWriter, req *http.Request)
+	DeleteScheduler(w http.ResponseWriter, req *http.Request)
 }
 type APIHandler interface {
 	ListJobs(ctx context.Context, queryParams *goqmodel.ListJobsQueryParams) (*goqmodel.ListJobsResponse, error)
@@ -36,6 +41,11 @@ type APIHandler interface {
 	ReleaseJob(ctx context.Context, pathParams *goqmodel.ReleaseJobPathParams) (*goqmodel.Job, error)
 	SetJobSuccess(ctx context.Context, pathParams *goqmodel.SetJobSuccessPathParams, body *goqmodel.Job) (*goqmodel.Job, error)
 	SetJobError(ctx context.Context, pathParams *goqmodel.SetJobErrorPathParams, body *goqmodel.Job) (*goqmodel.Job, error)
+	ListSchedulers(ctx context.Context, queryParams *goqmodel.ListSchedulersRequest) (*goqmodel.ListSchedulersResponse, error)
+	PostScheduler(ctx context.Context, body *goqmodel.Scheduler) (*goqmodel.Scheduler, error)
+	GetScheduler(ctx context.Context, pathParams *goqmodel.GetSchedulerPathParams) (*goqmodel.Scheduler, error)
+	PutScheduler(ctx context.Context, pathParams *goqmodel.PutSchedulerPathParams, body *goqmodel.Scheduler) (*goqmodel.Scheduler, error)
+	DeleteScheduler(ctx context.Context, pathParams *goqmodel.DeleteSchedulerPathParams) error
 }
 
 func RegisterRouter(apiHandler APIHandler, r *mux.Router, c ErrorCoder) {
@@ -49,6 +59,11 @@ func RegisterRouter(apiHandler APIHandler, r *mux.Router, c ErrorCoder) {
 	r.Handle("/jobs/{jobID}:release", http.HandlerFunc(h.ReleaseJob)).Methods(http.MethodPost)
 	r.Handle("/jobs/{jobID}:success", http.HandlerFunc(h.SetJobSuccess)).Methods(http.MethodPost)
 	r.Handle("/jobs/{jobID}:error", http.HandlerFunc(h.SetJobError)).Methods(http.MethodPost)
+	r.Handle("/schedulers", http.HandlerFunc(h.ListSchedulers)).Methods(http.MethodGet)
+	r.Handle("/schedulers", http.HandlerFunc(h.PostScheduler)).Methods(http.MethodPost)
+	r.Handle("/schedulers/{schedulerID}", http.HandlerFunc(h.GetScheduler)).Methods(http.MethodGet)
+	r.Handle("/schedulers/{schedulerID}", http.HandlerFunc(h.PutScheduler)).Methods(http.MethodPut)
+	r.Handle("/schedulers/{schedulerID}", http.HandlerFunc(h.DeleteScheduler)).Methods(http.MethodDelete)
 }
 
 func apiHandlerToHTTPHandler(apiHandler APIHandler, errorCoder ErrorCoder) HTTPHandler {
@@ -268,4 +283,95 @@ func (h *httpHandler) SetJobError(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	sendOK(w, r)
+}
+func (h *httpHandler) ListSchedulers(w http.ResponseWriter, req *http.Request) {
+	pageTokenQueryParam := req.URL.Query().Get("page_token")
+	pageSizeQueryParam := 0
+	if req.URL.Query().Get("page_size") != "" {
+		q, err := strconv.Atoi(req.URL.Query().Get("page_size"))
+		if err != nil {
+			sendErrorWithCode(w, http.StatusBadRequest, err)
+			return
+		}
+		pageSizeQueryParam = q
+	}
+	queryParams := goqmodel.ListSchedulersRequest{
+		PageToken: pageTokenQueryParam,
+		PageSize:  pageSizeQueryParam,
+	}
+	r, err := h.apiHandler.ListSchedulers(req.Context(), &queryParams)
+	if err != nil {
+		h.sendError(w, err)
+		return
+	}
+	sendOK(w, r)
+}
+func (h *httpHandler) PostScheduler(w http.ResponseWriter, req *http.Request) {
+	var requestBody goqmodel.Scheduler
+	if err := json.NewDecoder(req.Body).Decode(&requestBody); err != nil {
+		sendErrorWithCode(w, http.StatusBadRequest, err)
+		return
+	}
+	r, err := h.apiHandler.PostScheduler(req.Context(), &requestBody)
+	if err != nil {
+		h.sendError(w, err)
+		return
+	}
+	sendOK(w, r)
+}
+func (h *httpHandler) GetScheduler(w http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	schedulerID, ok := vars["schedulerID"]
+	if !ok {
+		sendErrorWithCode(w, http.StatusBadRequest, fmt.Errorf("invalid schedulerID path parameter"))
+		return
+	}
+	pathParams := goqmodel.GetSchedulerPathParams{
+		SchedulerID: schedulerID,
+	}
+	r, err := h.apiHandler.GetScheduler(req.Context(), &pathParams)
+	if err != nil {
+		h.sendError(w, err)
+		return
+	}
+	sendOK(w, r)
+}
+func (h *httpHandler) PutScheduler(w http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	schedulerID, ok := vars["schedulerID"]
+	if !ok {
+		sendErrorWithCode(w, http.StatusBadRequest, fmt.Errorf("invalid schedulerID path parameter"))
+		return
+	}
+	pathParams := goqmodel.PutSchedulerPathParams{
+		SchedulerID: schedulerID,
+	}
+	var requestBody goqmodel.Scheduler
+	if err := json.NewDecoder(req.Body).Decode(&requestBody); err != nil {
+		sendErrorWithCode(w, http.StatusBadRequest, err)
+		return
+	}
+	r, err := h.apiHandler.PutScheduler(req.Context(), &pathParams, &requestBody)
+	if err != nil {
+		h.sendError(w, err)
+		return
+	}
+	sendOK(w, r)
+}
+func (h *httpHandler) DeleteScheduler(w http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	schedulerID, ok := vars["schedulerID"]
+	if !ok {
+		sendErrorWithCode(w, http.StatusBadRequest, fmt.Errorf("invalid schedulerID path parameter"))
+		return
+	}
+	pathParams := goqmodel.DeleteSchedulerPathParams{
+		SchedulerID: schedulerID,
+	}
+	err := h.apiHandler.DeleteScheduler(req.Context(), &pathParams)
+	if err != nil {
+		h.sendError(w, err)
+		return
+	}
+	sendOK(w, struct{}{})
 }

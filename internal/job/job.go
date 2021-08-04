@@ -20,8 +20,7 @@ type Repository interface {
 }
 
 type Reporter interface {
-	GetCountByStatus(ctx context.Context) (map[JobStatus]int64, error)
-	GetCountByName(ctx context.Context) (map[string]int64, error)
+	GetCountByNameByStatus(ctx context.Context) (map[string]map[JobStatus]int64, error)
 }
 
 type JobStatus string
