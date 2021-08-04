@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/adamlouis/goq/internal/apiserver"
-	"github.com/adamlouis/goq/internal/domain/job/jobsqlite3"
+	"github.com/adamlouis/goq/internal/job/jobsqlite3"
 	"github.com/adamlouis/goq/internal/pkg/jsonlog"
 	"github.com/adamlouis/goq/internal/pkg/sqlite3util"
 	"github.com/adamlouis/goq/internal/webserver"

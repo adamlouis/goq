@@ -9,7 +9,7 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/adamlouis/goq/internal/domain/job"
+	"github.com/adamlouis/goq/internal/job"
 	"github.com/adamlouis/goq/internal/pkg/crudutil"
 	"github.com/adamlouis/goq/internal/pkg/errtype"
 	"github.com/adamlouis/goq/internal/pkg/sqlite3util"

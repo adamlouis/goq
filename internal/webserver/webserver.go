@@ -9,7 +9,7 @@ import (
 	"text/template"
 
 	"github.com/adamlouis/goq/internal/apiserver"
-	"github.com/adamlouis/goq/internal/domain/job"
+	"github.com/adamlouis/goq/internal/job"
 	"github.com/adamlouis/goq/internal/pkg/jsonlog"
 	"github.com/adamlouis/goq/pkg/goqmodel"
 	"github.com/gorilla/mux"

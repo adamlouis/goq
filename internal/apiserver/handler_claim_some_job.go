@@ -3,7 +3,7 @@ package apiserver
 import (
 	"context"
 
-	"github.com/adamlouis/goq/internal/domain/job"
+	"github.com/adamlouis/goq/internal/job"
 	"github.com/adamlouis/goq/pkg/goqmodel"
 )
 

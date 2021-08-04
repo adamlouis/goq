@@ -1,8 +1,8 @@
 package apiserver
 
 import (
-	"github.com/adamlouis/goq/internal/domain/job"
-	"github.com/adamlouis/goq/internal/domain/job/jobsqlite3"
+	"github.com/adamlouis/goq/internal/job"
+	"github.com/adamlouis/goq/internal/job/jobsqlite3"
 	"github.com/jmoiron/sqlx"
 )
 
