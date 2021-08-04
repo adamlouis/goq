@@ -46,9 +46,28 @@
   <body>
     <div>
       <h1><a href="/">{{ .Title }}!</a></h1>
-      <ul>
-        <li><a href="/jobs">jobs</a></li>
-      </ul>
+      <table>
+        <thead>
+          <th>id</th>
+          <th>name</th>
+          <th>status</th>
+          <th>scheduled_for</th>
+          <th>created_at</th>
+          <th>updated_at</th>
+        </thead>
+        <tbody>
+          {{ range .Jobs }}
+          <tr>
+            <td><a target="_blank" href="/api/jobs/{{ .ID }}">{{ .ID }}</a></td>
+            <td>{{ .Name }}</td>
+            <td>{{ .Status }}</td>
+            <td>{{ .ScheduledFor }}</td>
+            <td>{{ .CreatedAt }}</td>
+            <td>{{ .UpdatedAt }}</td>
+          </tr>
+          {{ end }}
+        </tbody>
+      </table>
     </div>
   </body>
 </html>

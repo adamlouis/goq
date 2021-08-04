@@ -1,9 +1,9 @@
 
 build:
-	go build -o bin/goq main.go
+	go build --tags "json1" -o bin/goq main.go
 
 run: build
-	./bin/goq
+	GOQ_MODE=LOCAL ./bin/goq
 
 destroy: clean
 	rm -f internal/server/handler*.go
