@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/adamlouis/goq/internal/apiserver"
@@ -17,6 +18,7 @@ import (
 	"github.com/adamlouis/goq/internal/scheduler/schedulersqlite3"
 	"github.com/adamlouis/goq/internal/webserver"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
 	"github.com/jmoiron/sqlx"
 	"github.com/joho/godotenv"
 	_ "github.com/mattn/go-sqlite3"
@@ -107,7 +109,7 @@ func main() {
 	}
 
 	rootRouter := mux.NewRouter()
-	rootRouter.Use(loggerMiddleware)
+	rootRouter.Use(loggerMiddleware, webSessionAuthorizationProcessor, bearerAuthorizationProcessor, aclMiddleware)
 
 	apiHdl := apiserver.NewAPIHandler(ctx, jobDB, schedulerDB)
 	apiRouter := rootRouter.PathPrefix("/api").Subrouter()
@@ -143,5 +145,80 @@ func loggerMiddleware(next http.Handler) http.Handler {
 			"path", r.URL.Path,
 			"time", time.Now().Format(time.RFC3339),
 		)
+	})
+}
+
+// TODO: pass authz/authn pkg, test, etc
+var (
+	key   = []byte(os.Getenv("GOQ_SESSION_KEY"))
+	store = sessions.NewFilesystemStore(os.Getenv("GOQ_SESSION_STORE_PATH"), key)
+)
+
+type AuthTypeName string
+
+const AuthType AuthTypeName = "AUTH_TYPE"
+
+type AuthTypeValue string
+
+const AuthTypeWeb AuthTypeValue = "WEB_SESSION"
+const AuthTypeAPI AuthTypeValue = "BEARER"
+
+func webSessionAuthorizationProcessor(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		session, _ := store.Get(r, "web-session")
+		if auth, ok := session.Values["authenticated"].(bool); ok && auth {
+			ctx := context.WithValue(r.Context(), AuthType, AuthTypeWeb)
+			r = r.WithContext(ctx)
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+func bearerAuthorizationProcessor(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		az := r.Header["Authorization"]
+		if len(az) == 1 {
+			apiKey := os.Getenv("GOQ_API_KEY")
+			if len(apiKey) > 0 {
+				if az[0] == fmt.Sprintf("Bearer %s", apiKey) {
+					ctx := context.WithValue(r.Context(), AuthType, AuthTypeAPI)
+					r = r.WithContext(ctx)
+				}
+			}
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+func aclMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		allow := false
+		val, ok := r.Context().Value(AuthType).(AuthTypeValue)
+
+		if r.URL.Path == "/login" || r.URL.Path == "/logout" {
+			allow = true
+		}
+
+		if strings.HasPrefix(r.URL.Path, "/api") && ok && val == AuthTypeAPI {
+			allow = true
+		}
+
+		if !strings.HasPrefix(r.URL.Path, "/api") && ok && val == AuthTypeWeb {
+			allow = true
+		}
+
+		if allow {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		if strings.HasPrefix(r.URL.Path, "/api") {
+			http.Error(w, "forbidden", http.StatusForbidden)
+			return
+		}
+
+		w.Header().Add("Content-Type", "text/html")
+		w.WriteHeader(http.StatusForbidden)
+		fmt.Fprintf(w, `forbidden - <a href="/login">login</a>`)
 	})
 }

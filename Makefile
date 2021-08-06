@@ -3,7 +3,14 @@ build:
 	go build --tags "json1" -o bin/goq main.go
 
 run: build
-	GOQ_MODE=LOCAL ./bin/goq
+	mkdir -p /tmp/goq-session-store
+	GOQ_MODE=DEVELOPMENT \
+		GOQ_API_KEY=letmein  \
+		GOQ_ROOT_USERNAME=root \
+		GOQ_ROOT_PASSWORD=letmein \
+		GOQ_SESSION_KEY=itsasecret \
+		GOQ_SESSION_STORE_PATH=/tmp/goq-session-store \
+		./bin/goq
 
 destroy: clean
 	rm -f internal/server/handler*.go
