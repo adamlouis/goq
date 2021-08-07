@@ -1,39 +1,35 @@
 package webserver
 
 import (
-	"io/ioutil"
 	"net/http"
-	"os"
+
+	"github.com/adamlouis/goq/internal/pkg/jsonlog"
+	"github.com/adamlouis/goq/internal/session"
 )
 
 func (wh *webHandler) PostLogin(w http.ResponseWriter, r *http.Request) {
-	// parse form
-	body, _ := ioutil.ReadAll(r.Body)
-	form := dumbDecode(body)
-	username := form["username"]
-	password := form["password"]
+	if err := r.ParseForm(); err != nil {
+		jsonlog.Log("error", err.Error())
+	}
 
-	// check credentials
-	ru := os.Getenv("GOQ_ROOT_USERNAME")
-	rp := os.Getenv("GOQ_ROOT_PASSWORD")
+	username := r.Form.Get("username")
+	password := r.Form.Get("password")
 
-	matches := len(ru) > 0 && len(rp) > 0 && ru == username && rp == password
-
-	if !matches {
+	if !wh.checker.Check(username, password) {
 		http.Error(w, "failed to log in", http.StatusBadRequest)
 		return
 	}
 
-	// delete old session
-	old, _ := store.Get(r, "web-session")
-	old.Options.MaxAge = 0
-	old.Save(r, w)
+	if err := wh.sessionManger.Delete(w, r); err != nil {
+		jsonlog.Log("error", err.Error())
+	}
 
-	// create new session
-	session, _ := store.New(r, "web-session")
-	session.Values["username"] = username
-	session.Values["authenticated"] = true
-	session.Save(r, w)
+	if err := wh.sessionManger.Create(w, r, &session.Payload{
+		Username:      username,
+		Authenticated: true,
+	}); err != nil {
+		jsonlog.Log("error", err.Error())
+	}
 
 	http.Redirect(w, r, "/", http.StatusFound)
 }

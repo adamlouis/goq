@@ -2,13 +2,14 @@ package webserver
 
 import (
 	"net/http"
+
+	"github.com/adamlouis/goq/internal/pkg/jsonlog"
 )
 
 func (wh *webHandler) GetLogout(w http.ResponseWriter, r *http.Request) {
-	session, _ := store.Get(r, "web-session")
-	session.Options.MaxAge = 0
-	store.Save(r, w, session)
-	session.Save(r, w)
+	if err := wh.sessionManger.Delete(w, r); err != nil {
+		jsonlog.Log("error", err.Error())
+	}
 
 	http.Redirect(w, r, "/login", http.StatusFound)
 }

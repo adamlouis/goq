@@ -8,14 +8,15 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/adamlouis/goq/internal/apiserver"
+	"github.com/adamlouis/goq/internal/auth"
 	"github.com/adamlouis/goq/internal/job/jobsqlite3"
 	"github.com/adamlouis/goq/internal/pkg/jsonlog"
 	"github.com/adamlouis/goq/internal/pkg/sqlite3util"
 	"github.com/adamlouis/goq/internal/scheduler/schedulersqlite3"
+	"github.com/adamlouis/goq/internal/session"
 	"github.com/adamlouis/goq/internal/webserver"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
@@ -28,23 +29,24 @@ var (
 	fDotenv = flag.String("dotenv", "", "a .env file from which to read environment variables. useful for local development.")
 )
 
-// TODO: revisit config-based init
 const (
-	_envServerPort = "GOQ_SERVER_PORT"
-	// _envSQLite3ConnectionString = "GOQ_SQLITE3_CONNECTION_STRING"
-	// _envStaticDir              = "SQUIRRELBYTE_STATIC_DIR"
-	// _envAllowedHTTPMethods     = "SQUIRRELBYTE_ALLOWED_HTTP_METHODS"
-	// _envAllowedHTTPPaths       = "SQUIRRELBYTE_ALLOWED_HTTP_PATHS"
+	_envServerPort       = "GOQ_SERVER_PORT"
+	_envRootUsername     = "GOQ_ROOT_USERNAME"
+	_envRootPassword     = "GOQ_ROOT_PASSWORD"
+	_envSessionStorePath = "GOQ_SESSION_STORE_PATH"
+	_envSessionKey       = "GOQ_SESSION_KEY"
+	_envAPIKey           = "GOQ_API_KEY"
 
 	defaultServerPort = 9944
 )
 
 type config struct {
-	ServerPort int
-	// SQLite3ConnectionString string
-	// StaticDir          string
-	// AllowedHTTPMethods map[string]bool
-	// AllowedHTTPPaths   map[string]bool
+	ServerPort       int
+	RootUsername     string
+	RootPassword     string
+	SessionStorePath string
+	SessionKey       string
+	APIKey           string
 }
 
 func loadConfig() (*config, error) {
@@ -66,8 +68,12 @@ func loadConfig() (*config, error) {
 	}
 
 	return &config{
-		ServerPort: serverPort,
-		// SQLite3ConnectionString: os.Getenv(_envSQLite3ConnectionString),
+		ServerPort:       serverPort,
+		RootUsername:     os.Getenv(_envRootUsername),
+		RootPassword:     os.Getenv(_envRootPassword),
+		SessionStorePath: os.Getenv(_envSessionStorePath),
+		SessionKey:       os.Getenv(_envSessionKey),
+		APIKey:           os.Getenv(_envAPIKey),
 	}, nil
 }
 
@@ -86,6 +92,16 @@ func main() {
 	c, err := loadConfig()
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	if len(c.APIKey) == 0 {
+		log.Fatalf("API key required")
+	}
+	if len(c.RootPassword) == 0 {
+		log.Fatalf("root password required")
+	}
+	if len(c.SessionKey) == 0 {
+		log.Fatalf("session key required")
 	}
 
 	jobDB, err := newDB(c, "./db/job.db")
@@ -108,14 +124,19 @@ func main() {
 		log.Fatal(err)
 	}
 
+	sessionManager := session.NewFSManager("web-session", sessions.NewFilesystemStore(c.SessionStorePath, []byte(c.SessionKey)))
+	upChecker := auth.NewConstUPChecker(c.RootUsername, c.RootPassword)
+	apiKeyChecker := auth.NewConstKChecker(c.APIKey)
+
 	rootRouter := mux.NewRouter()
-	rootRouter.Use(loggerMiddleware, webSessionAuthorizationProcessor, bearerAuthorizationProcessor, aclMiddleware)
+	rootRouter.Use(loggerMiddleware)
+	rootRouter.Use(auth.GetMiddleware(sessionManager, apiKeyChecker)...)
 
 	apiHdl := apiserver.NewAPIHandler(ctx, jobDB, schedulerDB)
 	apiRouter := rootRouter.PathPrefix("/api").Subrouter()
 	apiserver.RegisterRouter(apiHdl, apiRouter, apiserver.GetErrorCode)
 
-	webHdl := webserver.NewWebHandler(apiHdl, jobsqlite3.NewJobReporter(jobDB))
+	webHdl := webserver.NewWebHandler(apiHdl, jobsqlite3.NewJobReporter(jobDB), sessionManager, upChecker)
 	webserver.RegisterRouter(webHdl, rootRouter)
 
 	addr := fmt.Sprintf(":%d", c.ServerPort)
@@ -145,80 +166,5 @@ func loggerMiddleware(next http.Handler) http.Handler {
 			"path", r.URL.Path,
 			"time", time.Now().Format(time.RFC3339),
 		)
-	})
-}
-
-// TODO: pass authz/authn pkg, test, etc
-var (
-	key   = []byte(os.Getenv("GOQ_SESSION_KEY"))
-	store = sessions.NewFilesystemStore(os.Getenv("GOQ_SESSION_STORE_PATH"), key)
-)
-
-type AuthTypeName string
-
-const AuthType AuthTypeName = "AUTH_TYPE"
-
-type AuthTypeValue string
-
-const AuthTypeWeb AuthTypeValue = "WEB_SESSION"
-const AuthTypeAPI AuthTypeValue = "BEARER"
-
-func webSessionAuthorizationProcessor(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		session, _ := store.Get(r, "web-session")
-		if auth, ok := session.Values["authenticated"].(bool); ok && auth {
-			ctx := context.WithValue(r.Context(), AuthType, AuthTypeWeb)
-			r = r.WithContext(ctx)
-		}
-		next.ServeHTTP(w, r)
-	})
-}
-
-func bearerAuthorizationProcessor(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		az := r.Header["Authorization"]
-		if len(az) == 1 {
-			apiKey := os.Getenv("GOQ_API_KEY")
-			if len(apiKey) > 0 {
-				if az[0] == fmt.Sprintf("Bearer %s", apiKey) {
-					ctx := context.WithValue(r.Context(), AuthType, AuthTypeAPI)
-					r = r.WithContext(ctx)
-				}
-			}
-		}
-		next.ServeHTTP(w, r)
-	})
-}
-
-func aclMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		allow := false
-		val, ok := r.Context().Value(AuthType).(AuthTypeValue)
-
-		if r.URL.Path == "/login" || r.URL.Path == "/logout" {
-			allow = true
-		}
-
-		if strings.HasPrefix(r.URL.Path, "/api") && ok && val == AuthTypeAPI {
-			allow = true
-		}
-
-		if !strings.HasPrefix(r.URL.Path, "/api") && ok && val == AuthTypeWeb {
-			allow = true
-		}
-
-		if allow {
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		if strings.HasPrefix(r.URL.Path, "/api") {
-			http.Error(w, "forbidden", http.StatusForbidden)
-			return
-		}
-
-		w.Header().Add("Content-Type", "text/html")
-		w.WriteHeader(http.StatusForbidden)
-		fmt.Fprintf(w, `forbidden - <a href="/login">login</a>`)
 	})
 }

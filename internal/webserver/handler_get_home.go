@@ -1,6 +1,7 @@
 package webserver
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"sort"
@@ -11,42 +12,14 @@ import (
 )
 
 func (wh *webHandler) GetHome(w http.ResponseWriter, r *http.Request) {
-	session, _ := store.Get(r, "web-session")
-	username := fmt.Sprintf("%v", session.Values["username"])
+	username := ""
+	if p, _ := wh.sessionManger.Get(w, r); p != nil {
+		username = p.Username
+	}
 
-	report, err := wh.reporter.GetCountByNameByStatus(r.Context())
+	pivot, err := getJobStatusTable(r.Context(), wh.reporter)
 	if err != nil {
 		jsonlog.Log("error", err) // TODO: handle error
-	}
-
-	statusColumns := []job.JobStatus{
-		job.JobStatusQueued,
-		job.JobStatusClaimed,
-		job.JobStatusSuccess,
-		job.JobStatusError,
-	}
-
-	header := make([]string, 1+len(statusColumns))
-	for i, s := range statusColumns {
-		header[i+1] = string(s)
-	}
-	pivot := [][]string{header}
-
-	names := make([]string, len(report))
-	i := 0
-	for name := range report {
-		names[i] = name
-		i += 1
-	}
-	sort.Strings(names)
-
-	for _, name := range names {
-		row := make([]string, 5)
-		row[0] = name
-		for i, s := range statusColumns {
-			row[i+1] = fmt.Sprintf("%d", report[name][s])
-		}
-		pivot = append(pivot, row)
 	}
 
 	jobs := []*goqmodel.Job{}
@@ -72,8 +45,48 @@ func (wh *webHandler) GetHome(w http.ResponseWriter, r *http.Request) {
 	newTemplate("home.go.html", []string{"templates/common.go.html", "templates/home.go.html"}).Execute(w, pageData{
 		Username:   username,
 		Title:      "GOQ",
-		Jobs:       toJobTmpls(jobs),
 		Pivot:      pivot,
+		Jobs:       toJobTmpls(jobs),
 		Schedulers: toSchedulerTmpls(schedulers),
 	})
+}
+
+func getJobStatusTable(ctx context.Context, reporter job.Reporter) ([][]string, error) {
+	report, err := reporter.GetCountByNameByStatus(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	statusColumns := []job.JobStatus{
+		job.JobStatusQueued,
+		job.JobStatusClaimed,
+		job.JobStatusSuccess,
+		job.JobStatusError,
+	}
+
+	header := make([]string, 1+len(statusColumns))
+	for i, s := range statusColumns {
+		header[i+1] = string(s)
+	}
+	pivot := [][]string{header}
+
+	names := make([]string, len(report))
+	i := 0
+	for name := range report {
+		names[i] = name
+		i += 1
+	}
+	sort.Strings(names)
+
+	for _, name := range names {
+		row := make([]string, len(statusColumns)+1)
+		row[0] = name
+		for i, s := range statusColumns {
+			row[i+1] = fmt.Sprintf("%d", report[name][s])
+		}
+		pivot = append(pivot, row)
+	}
+
+	return pivot, nil
+
 }
