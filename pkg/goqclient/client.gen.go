@@ -34,14 +34,21 @@ type Client interface {
 	DeleteScheduler(ctx context.Context, pathParams *goqmodel.DeleteSchedulerPathParams) (int, error)
 }
 
-func NewHTTPClient(baseURL string) Client {
+type HTTPClientOptions struct {
+	BaseURL          string
+	TransformRequest func(req *http.Request) *http.Request
+}
+
+func NewHTTPClient(opts HTTPClientOptions) Client {
 	return &client{
-		baseURL: baseURL,
+		baseURL:          opts.BaseURL,
+		transformRequest: opts.TransformRequest,
 	}
 }
 
 type client struct {
-	baseURL string
+	baseURL          string
+	transformRequest func(req *http.Request) *http.Request
 }
 
 func (c *client) ListJobs(ctx context.Context, queryParams *goqmodel.ListJobsQueryParams) (*goqmodel.ListJobsResponse, int, error) {
@@ -61,6 +68,9 @@ func (c *client) ListJobs(ctx context.Context, queryParams *goqmodel.ListJobsQue
 	}
 	req.Close = true
 	req.Header.Set("Content-Type", "application/json")
+	if c.transformRequest != nil {
+		req = c.transformRequest(req)
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, -1, err
@@ -96,6 +106,9 @@ func (c *client) GetJob(ctx context.Context, pathParams *goqmodel.GetJobPathPara
 	}
 	req.Close = true
 	req.Header.Set("Content-Type", "application/json")
+	if c.transformRequest != nil {
+		req = c.transformRequest(req)
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, -1, err
@@ -131,6 +144,9 @@ func (c *client) DeleteJob(ctx context.Context, pathParams *goqmodel.DeleteJobPa
 	}
 	req.Close = true
 	req.Header.Set("Content-Type", "application/json")
+	if c.transformRequest != nil {
+		req = c.transformRequest(req)
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return -1, err
@@ -163,6 +179,9 @@ func (c *client) QueueJob(ctx context.Context, body *goqmodel.Job) (*goqmodel.Jo
 	}
 	req.Close = true
 	req.Header.Set("Content-Type", "application/json")
+	if c.transformRequest != nil {
+		req = c.transformRequest(req)
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, -1, err
@@ -203,6 +222,9 @@ func (c *client) ClaimSomeJob(ctx context.Context, body *goqmodel.ClaimSomeJobRe
 	}
 	req.Close = true
 	req.Header.Set("Content-Type", "application/json")
+	if c.transformRequest != nil {
+		req = c.transformRequest(req)
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, -1, err
@@ -238,6 +260,9 @@ func (c *client) ClaimJob(ctx context.Context, pathParams *goqmodel.ClaimJobPath
 	}
 	req.Close = true
 	req.Header.Set("Content-Type", "application/json")
+	if c.transformRequest != nil {
+		req = c.transformRequest(req)
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, -1, err
@@ -273,6 +298,9 @@ func (c *client) ReleaseJob(ctx context.Context, pathParams *goqmodel.ReleaseJob
 	}
 	req.Close = true
 	req.Header.Set("Content-Type", "application/json")
+	if c.transformRequest != nil {
+		req = c.transformRequest(req)
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, -1, err
@@ -313,6 +341,9 @@ func (c *client) SetJobSuccess(ctx context.Context, pathParams *goqmodel.SetJobS
 	}
 	req.Close = true
 	req.Header.Set("Content-Type", "application/json")
+	if c.transformRequest != nil {
+		req = c.transformRequest(req)
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, -1, err
@@ -353,6 +384,9 @@ func (c *client) SetJobError(ctx context.Context, pathParams *goqmodel.SetJobErr
 	}
 	req.Close = true
 	req.Header.Set("Content-Type", "application/json")
+	if c.transformRequest != nil {
+		req = c.transformRequest(req)
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, -1, err
@@ -390,6 +424,9 @@ func (c *client) ListSchedulers(ctx context.Context, queryParams *goqmodel.ListS
 	}
 	req.Close = true
 	req.Header.Set("Content-Type", "application/json")
+	if c.transformRequest != nil {
+		req = c.transformRequest(req)
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, -1, err
@@ -430,6 +467,9 @@ func (c *client) PostScheduler(ctx context.Context, body *goqmodel.Scheduler) (*
 	}
 	req.Close = true
 	req.Header.Set("Content-Type", "application/json")
+	if c.transformRequest != nil {
+		req = c.transformRequest(req)
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, -1, err
@@ -465,6 +505,9 @@ func (c *client) GetScheduler(ctx context.Context, pathParams *goqmodel.GetSched
 	}
 	req.Close = true
 	req.Header.Set("Content-Type", "application/json")
+	if c.transformRequest != nil {
+		req = c.transformRequest(req)
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, -1, err
@@ -505,6 +548,9 @@ func (c *client) PutScheduler(ctx context.Context, pathParams *goqmodel.PutSched
 	}
 	req.Close = true
 	req.Header.Set("Content-Type", "application/json")
+	if c.transformRequest != nil {
+		req = c.transformRequest(req)
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, -1, err
@@ -540,6 +586,9 @@ func (c *client) DeleteScheduler(ctx context.Context, pathParams *goqmodel.Delet
 	}
 	req.Close = true
 	req.Header.Set("Content-Type", "application/json")
+	if c.transformRequest != nil {
+		req = c.transformRequest(req)
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return -1, err

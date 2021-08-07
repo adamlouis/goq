@@ -37,9 +37,9 @@ objects:
   ListSchedulersResponse:
     Schedulers: "[]*Scheduler"
     NextPageToken: string
-  LoginRequest:
-    Username: string
-    Password: string
+  # LoginRequest:
+  #   Username: string
+  #   Password: string
 
 # TODO: s/routes/api/
 routes:
@@ -101,28 +101,27 @@ routes:
       response_body: "*Scheduler"
     DELETE:
       name: DeleteScheduler
-
 # TODO: implement in generator
-web:
-  /:
-    GET:
-      name: GetHome
-  /jobs/{jobID}:
-    GET:
-      name: GetJob
-  /schedulers/{schedulerID}:
-    GET:
-      name: GetScheduler
-  /login:
-    GET:
-      name: GetLogin
-  /login:
-    POST:
-      name: PostLogin
-      request_body: "*LoginRequest"
-  /logout:
-    GET:
-      name: GetLogout
-  /secret:
-    GET:
-      name: GetSecret
+# web:
+#   /:
+#     GET:
+#       name: GetHome
+#   /jobs/{jobID}:
+#     GET:
+#       name: GetJob
+#   /schedulers/{schedulerID}:
+#     GET:
+#       name: GetScheduler
+#   /login:
+#     GET:
+#       name: GetLogin
+#   /login:
+#     POST:
+#       name: PostLogin
+#       request_body: "*LoginRequest"
+#   /logout:
+#     GET:
+#       name: GetLogout
+#   /secret:
+#     GET:
+#       name: GetSecret
