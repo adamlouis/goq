@@ -1,27 +1,30 @@
+{{ define "header" }}
+<div class="header">
+  <h1><a href="/">{{ .Title }}!</a></h1>
+  <div class="flex-right">
+    <div class="username">welcome {{ .Username }}!</div>
+    <a href="/logout">logout</a>
+  </div>
+</div>
+{{ end }}
+
+<br />
+
 {{ define "html-header" }}
 <head>
   <title>{{ .Title }}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
+    /* GENERAL STYLES */
     body {
       margin: 10px;
       font-family: "Courier New", monospace;
     }
 
-    label,
-    input {
-      font-size: 12px;
-      margin-bottom: 10px;
-    }
-    input[type="submit"] {
-      float: right;
-      cursor: pointer;
-      padding: 4px 8px;
-    }
-
     h1 {
       font-size: 1.2em;
     }
+
     h2 {
       font-size: 1em;
     }
@@ -30,30 +33,19 @@
       border-collapse: collapse;
       font-size: 12px;
       table-layout: fixed;
-    }
-
-    .table-scroller {
-      width: 100%;
-      overflow: scroll;
-    }
-
-    table,
-    th,
-    td {
       border: solid black 1px;
     }
 
-    td,
     th {
+      border: solid black 1px;
       padding: 4px 8px;
-    }
-
-    th {
       text-align: center;
       background-color: #ddd;
     }
 
     td {
+      border: solid black 1px;
+      padding: 4px 8px;
       text-align: right;
     }
 
@@ -73,19 +65,53 @@
       word-wrap: break-word; /* Internet Explorer 5.5+ */
     }
 
+    input[type="submit"] {
+      float: right;
+      cursor: pointer;
+      padding: 4px 8px;
+    }
+
+    label {
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
+
+    input {
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
+
+    /* CLASS STYLES */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .flex-right {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .username {
+      margin-right: 16px;
+    }
+
+    .table-scroller {
+      width: 100%;
+      overflow: auto;
+    }
+
     pre.code {
       background-color: #eee;
       padding: 16px;
     }
 
-    .table-scroller {
-      width: 100%;
-      overflow: scroll;
-    }
-
     form.login {
       width: fit-content;
     }
+
     form.login label {
       font-size: 14px;
       margin-right: 8px;

@@ -9,9 +9,9 @@ import (
 
 	"github.com/adamlouis/goq/internal/apiserver"
 	"github.com/adamlouis/goq/internal/auth"
-	"github.com/adamlouis/goq/internal/job"
 	"github.com/adamlouis/goq/internal/session"
 	"github.com/gorilla/mux"
+	"github.com/jmoiron/sqlx"
 )
 
 //go:embed templates
@@ -28,13 +28,13 @@ type WebHandler interface {
 
 func NewWebHandler(
 	apiHandler apiserver.APIHandler,
-	reporter job.Reporter,
+	jobDB *sqlx.DB,
 	sessionManger session.Manager,
 	checker auth.UPChecker,
 ) WebHandler {
 	return &webHandler{
 		apiHandler:    apiHandler,
-		reporter:      reporter,
+		jobDB:         jobDB,
 		sessionManger: sessionManger,
 		checker:       checker,
 	}
@@ -42,7 +42,7 @@ func NewWebHandler(
 
 type webHandler struct {
 	apiHandler    apiserver.APIHandler
-	reporter      job.Reporter
+	jobDB         *sqlx.DB
 	sessionManger session.Manager
 	checker       auth.UPChecker
 }

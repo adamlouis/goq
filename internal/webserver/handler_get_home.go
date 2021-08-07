@@ -7,6 +7,7 @@ import (
 	"sort"
 
 	"github.com/adamlouis/goq/internal/job"
+	"github.com/adamlouis/goq/internal/job/jobsqlite3"
 	"github.com/adamlouis/goq/internal/pkg/jsonlog"
 	"github.com/adamlouis/goq/pkg/goqmodel"
 )
@@ -17,7 +18,7 @@ func (wh *webHandler) GetHome(w http.ResponseWriter, r *http.Request) {
 		username = p.Username
 	}
 
-	pivot, err := getJobStatusTable(r.Context(), wh.reporter)
+	pivot, err := wh.getJobStatusTable(r.Context())
 	if err != nil {
 		jsonlog.Log("error", err) // TODO: handle error
 	}
@@ -51,8 +52,14 @@ func (wh *webHandler) GetHome(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func getJobStatusTable(ctx context.Context, reporter job.Reporter) ([][]string, error) {
-	report, err := reporter.GetCountByNameByStatus(ctx)
+func (wh *webHandler) getJobStatusTable(ctx context.Context) ([][]string, error) {
+	tx, err := wh.jobDB.Beginx()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	report, err := jobsqlite3.NewReporter(tx).GetCountByNameByStatus(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -88,5 +95,4 @@ func getJobStatusTable(ctx context.Context, reporter job.Reporter) ([][]string, 
 	}
 
 	return pivot, nil
-
 }

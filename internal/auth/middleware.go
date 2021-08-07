@@ -25,7 +25,7 @@ const (
 
 func GetMiddleware(sessionManager session.Manager, apiKeyChecker KChecker) []mux.MiddlewareFunc {
 	return []mux.MiddlewareFunc{
-		// authn for web session
+		// auth for web session
 		func(next http.Handler) http.Handler {
 			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				if p, _ := sessionManager.Get(w, r); p != nil {
@@ -44,7 +44,7 @@ func GetMiddleware(sessionManager session.Manager, apiKeyChecker KChecker) []mux
 				next.ServeHTTP(w, r)
 			})
 		},
-		// authn for api bearer token
+		// auth for api bearer token
 		func(next http.Handler) http.Handler {
 			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				az := r.Header["Authorization"]
@@ -97,7 +97,28 @@ func GetMiddleware(sessionManager session.Manager, apiKeyChecker KChecker) []mux
 				// return a styled error for web
 				w.Header().Add("Content-Type", "text/html")
 				w.WriteHeader(http.StatusForbidden)
-				fmt.Fprintf(w, `forbidden - <a href="/login">login</a>`)
+				fmt.Fprintf(w, `
+				<html>
+					<head>
+					</head>
+						<style>
+							body {
+								font-family: 'Courier New', monospace;
+							}
+
+							h1 {
+								font-size: 1.2em;
+							}
+							h2 {
+								font-size: 1em;
+							}
+						</style>
+					<body>
+						<h1>forbidden</h1>
+						<a href="/login">login</a>
+					</body>
+				</html>
+				`)
 			})
 		},
 	}

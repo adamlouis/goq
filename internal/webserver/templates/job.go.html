@@ -2,7 +2,7 @@
   {{ template "html-header" . }}
   <body>
     <div>
-      <h1><a href="/">{{ .Title }}!</a></h1>
+      {{ template "header" . }}
       <hr />
       <pre class="code">{{ .JobStr }}</pre>
       <hr />

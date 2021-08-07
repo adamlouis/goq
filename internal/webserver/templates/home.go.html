@@ -1,98 +1,93 @@
 <html>
   {{ template "html-header" . }}
   <body>
-    <div>
-      <h1><a href="/">{{ .Title }}!</a></h1>
-      <pre>Welcome {{ .Username }}!</pre>
-      <a href="/logout">logout</a>
-      <hr />
-      <h2>overview</h2>
-      <div class="table-scroller">
-        <table>
-          <thead>
-            {{ range $cell := index .Pivot 0 }}
-            <th>{{ $cell }}</th>
+    {{ template "header" . }}
+    <hr />
+    <h2>overview</h2>
+    <div class="table-scroller">
+      <table>
+        <thead>
+          {{ range $cell := index .Pivot 0 }}
+          <th>{{ $cell }}</th>
+          {{ end }}
+        </thead>
+        <tbody>
+          {{ range $row := slice .Pivot 1 }}
+          <tr>
+            {{ range $cell := $row }}
+            <td>{{ $cell }}</td>
             {{ end }}
-          </thead>
-          <tbody>
-            {{ range $row := slice .Pivot 1 }}
-            <tr>
-              {{ range $cell := $row }}
-              <td>{{ $cell }}</td>
-              {{ end }}
-            </tr>
-            {{ end }}
-          </tbody>
-        </table>
-      </div>
-      <hr />
-      <h2>schedulers</h2>
-      <div class="table-scroller">
-        <table>
-          <thead>
-            <th>id</th>
-            <th>schedule</th>
-            <th>name</th>
-            <th>input</th>
-            <th>created_at</th>
-            <th>updated_at</th>
-          </thead>
-          <tbody>
-            {{ range .Schedulers }}
-            <tr>
-              <td><a href="/schedulers/{{ .ID }}">{{ .ID }}</a></td>
-              <td>{{ .Schedule }}</td>
-              <td>{{ .JobName }}</td>
-              <td><pre>{{ .InputStr }}</pre></td>
-              <td>{{.CreatedAt}}</td>
-              <td>{{.UpdatedAt}}</td>
-            </tr>
-            {{ end }}
-          </tbody>
-        </table>
-      </div>
-      <hr />
-      <h2>jobs</h2>
-      <div class="table-scroller">
-        <table>
-          <thead>
-            <th>id</th>
-            <th>name</th>
-            <th>status</th>
+          </tr>
+          {{ end }}
+        </tbody>
+      </table>
+    </div>
+    <hr />
+    <h2>schedulers</h2>
+    <div class="table-scroller">
+      <table>
+        <thead>
+          <th>id</th>
+          <th>schedule</th>
+          <th>name</th>
+          <th>input</th>
+          <th>created_at</th>
+          <th>updated_at</th>
+        </thead>
+        <tbody>
+          {{ range .Schedulers }}
+          <tr>
+            <td><a href="/schedulers/{{ .ID }}">{{ .ID }}</a></td>
+            <td>{{ .Schedule }}</td>
+            <td>{{ .JobName }}</td>
+            <td><pre>{{ .InputStr }}</pre></td>
+            <td>{{.CreatedAt}}</td>
+            <td>{{.UpdatedAt}}</td>
+          </tr>
+          {{ end }}
+        </tbody>
+      </table>
+    </div>
+    <hr />
+    <h2>jobs</h2>
+    <div class="table-scroller">
+      <table>
+        <thead>
+          <th>id</th>
+          <th>name</th>
+          <th>status</th>
+          {{/*
+          <th>input</th>
+          <th>output</th>
+          */}}
+          <th>scheduled_for</th>
+          <th>claimed_at</th>
+          <th>succeeded_at</th>
+          <th>errored_at</th>
+          <th>created_at</th>
+          <th>updated_at</th>
+        </thead>
+        <tbody>
+          {{ range .Jobs }}
+          <tr>
+            <td><a href="/jobs/{{ .ID }}">{{ .ID }}</a></td>
+            <td>{{ .Name }}</td>
+            <td>{{ .Status }}</td>
             {{/*
-            <th>input</th>
-            <th>output</th>
+            <td><pre>{{ .InputStr }}</pre></td>
+            */}} {{/*
+            <td><pre>{{ .OutputStr }}</pre></td>
             */}}
-            <th>scheduled_for</th>
-            <th>claimed_at</th>
-            <th>succeeded_at</th>
-            <th>errored_at</th>
-            <th>created_at</th>
-            <th>updated_at</th>
-          </thead>
-          <tbody>
-            {{ range .Jobs }}
-            <tr>
-              <td><a href="/jobs/{{ .ID }}">{{ .ID }}</a></td>
-              <td>{{ .Name }}</td>
-              <td>{{ .Status }}</td>
-              {{/*
-              <td><pre>{{ .InputStr }}</pre></td>
-              */}} {{/*
-              <td><pre>{{ .OutputStr }}</pre></td>
-              */}}
-              <td>{{ .ScheduledFor }}</td>
-              <td>{{ .ClaimedAt }}</td>
-              <td>{{ .SucceededAt }}</td>
-              <td>{{ .ErroredAt }}</td>
-              <td>{{ .CreatedAt }}</td>
-              <td>{{ .UpdatedAt }}</td>
-            </tr>
-            {{ end }}
-          </tbody>
-        </table>
-      </div>
-      <hr />
+            <td>{{ .ScheduledFor }}</td>
+            <td>{{ .ClaimedAt }}</td>
+            <td>{{ .SucceededAt }}</td>
+            <td>{{ .ErroredAt }}</td>
+            <td>{{ .CreatedAt }}</td>
+            <td>{{ .UpdatedAt }}</td>
+          </tr>
+          {{ end }}
+        </tbody>
+      </table>
     </div>
   </body>
 </html>

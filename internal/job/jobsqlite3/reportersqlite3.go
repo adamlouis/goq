@@ -7,14 +7,14 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func NewJobReporter(db *sqlx.DB) job.Reporter {
-	return &jobReporter{
+func NewReporter(db sqlx.Ext) job.Reporter {
+	return &reporter{
 		db: db,
 	}
 }
 
-type jobReporter struct {
-	db *sqlx.DB
+type reporter struct {
+	db sqlx.Ext
 }
 
 type nameStatusCountRow struct {
@@ -23,14 +23,8 @@ type nameStatusCountRow struct {
 	Count  int64  `db:"c"`
 }
 
-func (jr *jobReporter) GetCountByNameByStatus(ctx context.Context) (map[string]map[job.JobStatus]int64, error) {
-	tx, err := jr.db.Beginx()
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback()
-
-	rows, err := tx.Queryx("SELECT name, status, count(1) as c FROM job GROUP BY name, status ORDER BY c")
+func (jr *reporter) GetCountByNameByStatus(ctx context.Context) (map[string]map[job.JobStatus]int64, error) {
+	rows, err := jr.db.Queryx("SELECT name, status, count(1) as c FROM job GROUP BY name, status ORDER BY c")
 	if err != nil {
 		return nil, err
 	}
