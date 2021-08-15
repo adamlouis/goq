@@ -42,7 +42,7 @@ const (
 	defaultServerPort            = 9944
 	defaultSQLiteJobDBPath       = "./db/job.db"
 	defaultSQLiteSchedulerDBPath = "./db/scheduler.db"
-	webSessionCookieName         = "web-session"
+	webSessionCookieName         = "goq-session"
 )
 
 type config struct {

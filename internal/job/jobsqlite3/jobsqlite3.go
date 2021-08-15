@@ -259,9 +259,13 @@ func (jr *jobRepo) Success(ctx context.Context, id string, output goqmodel.JSONO
 	}
 	j.Status = string(job.JobStatusSuccess)
 
-	ob, err := json.Marshal(output)
-	if err != nil {
-		return nil, err
+	var ob []byte
+	if output != nil {
+		b, err := json.Marshal(output)
+		if err != nil {
+			return nil, err
+		}
+		ob = b
 	}
 
 	_, err = jr.db.Exec(`UPDATE job SET status = ?, output = ?, succeed_at = CURRENT_TIMESTAMP WHERE id = ?`, job.JobStatusSuccess, ob, j.ID)
@@ -282,9 +286,13 @@ func (jr *jobRepo) Error(ctx context.Context, id string, output goqmodel.JSONObj
 	}
 	j.Status = string(job.JobStatusError)
 
-	ob, err := json.Marshal(output)
-	if err != nil {
-		return nil, err
+	var ob []byte
+	if output != nil {
+		b, err := json.Marshal(output)
+		if err != nil {
+			return nil, err
+		}
+		ob = b
 	}
 
 	_, err = jr.db.Exec(`UPDATE job SET status = ?, output = ?, errored_at = CURRENT_TIMESTAMP WHERE id = ?`, job.JobStatusError, ob, j.ID)
