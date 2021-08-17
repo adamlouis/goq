@@ -10,6 +10,7 @@ type Repository interface {
 	// crud
 	Get(ctx context.Context, id string) (*goqmodel.Job, error)
 	List(ctx context.Context, args *goqmodel.ListJobsQueryParams) (*goqmodel.ListJobsResponse, error)
+	Search(ctx context.Context, args *goqmodel.SearchJobsRequest) (*goqmodel.SearchJobsResponse, error)
 	Delete(ctx context.Context, id string) error
 	// job queue semantics
 	Queue(ctx context.Context, j *goqmodel.Job) (*goqmodel.Job, error)

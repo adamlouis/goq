@@ -17,6 +17,7 @@ import (
 
 type HTTPHandler interface {
 	ListJobs(w http.ResponseWriter, req *http.Request)
+	SearchJobs(w http.ResponseWriter, req *http.Request)
 	GetJob(w http.ResponseWriter, req *http.Request)
 	DeleteJob(w http.ResponseWriter, req *http.Request)
 	QueueJob(w http.ResponseWriter, req *http.Request)
@@ -33,6 +34,7 @@ type HTTPHandler interface {
 }
 type APIHandler interface {
 	ListJobs(ctx context.Context, queryParams *goqmodel.ListJobsQueryParams) (*goqmodel.ListJobsResponse, error)
+	SearchJobs(ctx context.Context, body *goqmodel.SearchJobsRequest) (*goqmodel.SearchJobsResponse, error)
 	GetJob(ctx context.Context, pathParams *goqmodel.GetJobPathParams) (*goqmodel.Job, error)
 	DeleteJob(ctx context.Context, pathParams *goqmodel.DeleteJobPathParams) error
 	QueueJob(ctx context.Context, body *goqmodel.Job) (*goqmodel.Job, error)
@@ -51,6 +53,7 @@ type APIHandler interface {
 func RegisterRouter(apiHandler APIHandler, r *mux.Router, c ErrorCoder) {
 	h := apiHandlerToHTTPHandler(apiHandler, c)
 	r.Handle("/jobs", http.HandlerFunc(h.ListJobs)).Methods(http.MethodGet)
+	r.Handle("/jobs:search", http.HandlerFunc(h.SearchJobs)).Methods(http.MethodPost)
 	r.Handle("/jobs/{jobID}", http.HandlerFunc(h.GetJob)).Methods(http.MethodGet)
 	r.Handle("/jobs/{jobID}", http.HandlerFunc(h.DeleteJob)).Methods(http.MethodDelete)
 	r.Handle("/jobs:queue", http.HandlerFunc(h.QueueJob)).Methods(http.MethodPost)
@@ -140,6 +143,19 @@ func (h *httpHandler) ListJobs(w http.ResponseWriter, req *http.Request) {
 		PageToken: pageTokenQueryParam,
 	}
 	r, err := h.apiHandler.ListJobs(req.Context(), &queryParams)
+	if err != nil {
+		h.sendError(w, err)
+		return
+	}
+	sendOK(w, r)
+}
+func (h *httpHandler) SearchJobs(w http.ResponseWriter, req *http.Request) {
+	var requestBody goqmodel.SearchJobsRequest
+	if err := json.NewDecoder(req.Body).Decode(&requestBody); err != nil {
+		sendErrorWithCode(w, http.StatusBadRequest, err)
+		return
+	}
+	r, err := h.apiHandler.SearchJobs(req.Context(), &requestBody)
 	if err != nil {
 		h.sendError(w, err)
 		return

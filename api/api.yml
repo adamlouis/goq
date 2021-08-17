@@ -37,9 +37,14 @@ objects:
   ListSchedulersResponse:
     Schedulers: "[]*Scheduler"
     NextPageToken: string
-  # LoginRequest:
-  #   Username: string
-  #   Password: string
+  SearchJobsRequest:
+    OrderBy: "[]interface{}"
+    Where: interface{}
+    PageToken: string
+    PageSize: int
+  SearchJobsResponse:
+    Jobs: "[]*Job"
+    NextPageToken: string
 
 # TODO: s/routes/api/
 routes:
@@ -48,6 +53,11 @@ routes:
       name: ListJobs
       query_params: "*ListJobsQueryParams"
       response_body: "*ListJobsResponse"
+  /jobs:search:
+    POST:
+      name: SearchJobs
+      request_body: "*SearchJobsRequest"
+      response_body: "*SearchJobsResponse"
   /jobs/{jobID}:
     GET:
       name: GetJob

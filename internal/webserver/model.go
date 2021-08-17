@@ -8,9 +8,11 @@ import (
 
 type pageData struct {
 	Username     string
+	JQ           string
 	Title        string
 	JobStr       string
 	SchedulerStr string
+	JobNames     []string
 	Pivot        [][]string
 	Jobs         []*JobTmpl
 	Schedulers   []*SchedulerTmpl

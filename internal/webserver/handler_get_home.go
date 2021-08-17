@@ -23,6 +23,16 @@ func (wh *webHandler) GetHome(w http.ResponseWriter, r *http.Request) {
 		jsonlog.Log("error", err) // TODO: handle error
 	}
 
+	jns := []string{}
+	for _, r := range pivot {
+		for j, c := range r {
+			if j == 0 {
+				jns = append(jns, c)
+			}
+
+		}
+	}
+
 	jobs := []*goqmodel.Job{}
 	result, err := wh.apiHandler.ListJobs(r.Context(), &goqmodel.ListJobsQueryParams{
 		PageSize: 100,
@@ -48,6 +58,7 @@ func (wh *webHandler) GetHome(w http.ResponseWriter, r *http.Request) {
 		Title:      "GOQ",
 		Pivot:      pivot,
 		Jobs:       toJobTmpls(jobs),
+		JobNames:   jns,
 		Schedulers: toSchedulerTmpls(schedulers),
 	})
 }

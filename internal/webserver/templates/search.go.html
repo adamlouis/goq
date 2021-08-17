@@ -1,0 +1,65 @@
+<html>
+  {{ template "html-header" . }}
+  <body>
+    {{ template "header" . }}
+    <hr />
+    <form method="get" action="/search">
+      <div>
+        <textarea name="jq">{{ .JQ }}</textarea>
+      </div>
+      <div>
+        <input type="submit" />
+      </div>
+    </form>
+    <h2>jobs</h2>
+    <div class="table-scroller">
+      <table>
+        <thead>
+          <th>id</th>
+          <th>name</th>
+          <th>status</th>
+          {{/*
+          <th>input</th>
+          <th>output</th>
+          */}}
+          <th>scheduled_for</th>
+          <th>claimed_at</th>
+          <th>succeeded_at</th>
+          <th>errored_at</th>
+          <th>created_at</th>
+          <th>updated_at</th>
+        </thead>
+        <tbody>
+          {{ range .Jobs }}
+          <tr>
+            <td><a href="/jobs/{{ .ID }}">{{ .ID }}</a></td>
+            <td>{{ .Name }}</td>
+            <td>{{ .Status }}</td>
+            {{/*
+            <td><pre>{{ .InputStr }}</pre></td>
+            */}} {{/*
+            <td><pre>{{ .OutputStr }}</pre></td>
+            */}}
+            <td>{{ .ScheduledFor }}</td>
+            <td>{{ .ClaimedAt }}</td>
+            <td>{{ .SucceededAt }}</td>
+            <td>{{ .ErroredAt }}</td>
+            <td>{{ .CreatedAt }}</td>
+            <td>{{ .UpdatedAt }}</td>
+          </tr>
+          {{ end }}
+        </tbody>
+      </table>
+    </div>
+  </body>
+  <style>
+    form div {
+      margin: 4px 0px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 200px;
+    }
+  </style>
+</html>

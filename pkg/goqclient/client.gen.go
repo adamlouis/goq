@@ -19,6 +19,7 @@ import (
 
 type Client interface {
 	ListJobs(ctx context.Context, queryParams *goqmodel.ListJobsQueryParams) (*goqmodel.ListJobsResponse, int, error)
+	SearchJobs(ctx context.Context, body *goqmodel.SearchJobsRequest) (*goqmodel.SearchJobsResponse, int, error)
 	GetJob(ctx context.Context, pathParams *goqmodel.GetJobPathParams) (*goqmodel.Job, int, error)
 	DeleteJob(ctx context.Context, pathParams *goqmodel.DeleteJobPathParams) (int, error)
 	QueueJob(ctx context.Context, body *goqmodel.Job) (*goqmodel.Job, int, error)
@@ -84,6 +85,49 @@ func (c *client) ListJobs(ctx context.Context, queryParams *goqmodel.ListJobsQue
 		return nil, resp.StatusCode, fmt.Errorf("[%d] %s", resp.StatusCode, string(respBytes))
 	}
 	respBody := goqmodel.ListJobsResponse{}
+	if len(respBytes) == 0 {
+		return nil, resp.StatusCode, nil
+	}
+	err = json.Unmarshal(respBytes, &respBody)
+	if err != nil {
+		return nil, resp.StatusCode, err
+	}
+	return &respBody, resp.StatusCode, nil
+}
+func (c *client) SearchJobs(ctx context.Context, body *goqmodel.SearchJobsRequest) (*goqmodel.SearchJobsResponse, int, error) {
+	client := &http.Client{}
+	u, err := url.Parse(fmt.Sprintf("%s/jobs:search", c.baseURL))
+	if err != nil {
+		return nil, -1, err
+	}
+	var requestBody io.Reader
+	if jsonBytes, err := json.Marshal(body); err != nil {
+		return nil, -1, err
+	} else {
+		requestBody = bytes.NewBuffer(jsonBytes)
+	}
+	req, err := http.NewRequest(http.MethodPost, u.String(), requestBody)
+	if err != nil {
+		return nil, -1, err
+	}
+	req.Close = true
+	req.Header.Set("Content-Type", "application/json")
+	if c.transformRequest != nil {
+		req = c.transformRequest(req)
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, -1, err
+	}
+	defer resp.Body.Close()
+	respBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, resp.StatusCode, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, resp.StatusCode, fmt.Errorf("[%d] %s", resp.StatusCode, string(respBytes))
+	}
+	respBody := goqmodel.SearchJobsResponse{}
 	if len(respBytes) == 0 {
 		return nil, resp.StatusCode, nil
 	}

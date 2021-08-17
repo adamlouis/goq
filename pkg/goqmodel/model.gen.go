@@ -47,6 +47,16 @@ type ListSchedulersResponse struct {
 	Schedulers    []*Scheduler `json:"schedulers"`
 	NextPageToken string       `json:"next_page_token"`
 }
+type SearchJobsRequest struct {
+	OrderBy   []interface{} `json:"order_by"`
+	Where     interface{}   `json:"where"`
+	PageToken string        `json:"page_token"`
+	PageSize  int           `json:"page_size"`
+}
+type SearchJobsResponse struct {
+	Jobs          []*Job `json:"jobs"`
+	NextPageToken string `json:"next_page_token"`
+}
 type GetJobPathParams struct {
 	JobID string
 }

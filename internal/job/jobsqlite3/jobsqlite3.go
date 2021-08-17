@@ -10,6 +10,8 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/adamlouis/goq/internal/job"
+	"github.com/adamlouis/goq/internal/jsonlogic"
+	"github.com/adamlouis/goq/internal/jsonlogic/jsonlogicsqlite3"
 	"github.com/adamlouis/goq/internal/pkg/crudutil"
 	"github.com/adamlouis/goq/internal/pkg/errtype"
 	"github.com/adamlouis/goq/internal/pkg/sqlite3util"
@@ -27,6 +29,22 @@ func NewJobRepository(db sqlx.Ext) job.Repository {
 type jobRepo struct {
 	db sqlx.Ext
 }
+
+var (
+	searchColumns = []string{
+		"id",
+		"name",
+		"status",
+		"input",
+		"output",
+		"succeed_at",
+		"claimed_at",
+		"scheduled_for",
+		"errored_at",
+		"created_at",
+		"updated_at",
+	}
+)
 
 //go:embed migration/*.sql
 var MigrationFS embed.FS
@@ -108,6 +126,67 @@ func (jr *jobRepo) Get(ctx context.Context, id string) (*goqmodel.Job, error) {
 	return j, nil
 }
 
+func min(m, n int) int {
+	if n < m {
+		return n
+	}
+	return m
+}
+
+func (jr *jobRepo) Search(ctx context.Context, r *goqmodel.SearchJobsRequest) (*goqmodel.SearchJobsResponse, error) {
+	sb := sq.
+		StatementBuilder.
+		Select(searchColumns...).
+		From("job")
+
+	sqlz := jsonlogicsqlite3.NewSQLizer()
+
+	where, err := sqlz.ToSQL(r.Where)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println("WHERE", where)
+	sb = sb.Where(where)
+
+	orderBys, err := jsonlogic.AllToSQL(sqlz, r.OrderBy)
+	if err != nil {
+		return nil, err
+	}
+	orderBys = append(orderBys, "id ASC") // add id for stable order
+	sb = sb.OrderBy(orderBys...)
+
+	fmt.Println("ORDER BY", orderBys)
+	sb = sb.Limit(uint64(min(r.PageSize, 100)))
+
+	sql, args, err := sb.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Println(sql, args)
+	rows, err := jr.db.Queryx(sql, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	jobs := []*goqmodel.Job{}
+	for rows.Next() {
+		var r jobRow
+		err = rows.StructScan(&r)
+		if err != nil {
+			return nil, err
+		}
+		p, err := jobRowToJob(&r)
+		if err != nil {
+			return nil, err
+		}
+		jobs = append(jobs, p)
+	}
+	return &goqmodel.SearchJobsResponse{
+		Jobs: jobs,
+	}, nil
+
+}
 func (jr *jobRepo) List(ctx context.Context, args *goqmodel.ListJobsQueryParams) (*goqmodel.ListJobsResponse, error) {
 	sz, err := crudutil.GetPageSize(args.PageSize, 500)
 	if err != nil {
