@@ -14,6 +14,7 @@ type pageData struct {
 	SchedulerStr string
 	JobNames     []string
 	Pivot        [][]string
+	PivotLinks   [][]string
 	Jobs         []*JobTmpl
 	Schedulers   []*SchedulerTmpl
 }

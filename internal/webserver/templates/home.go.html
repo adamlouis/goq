@@ -12,26 +12,17 @@
           {{ end }}
         </thead>
         <tbody>
-          {{ range $row := slice .Pivot 1 }}
+          {{ range $i, $row := slice .Pivot 1 }}
           <tr>
-            {{ range $cell := $row }}
-            <td>{{ $cell }}</td>
+            {{ range $j, $cell := $row }}
+            <td>
+              <a href="{{ (index $.PivotLinks (add $i 1) $j) }}">{{ $cell }}</a>
+            </td>
             {{ end }}
           </tr>
           {{ end }}
         </tbody>
       </table>
-
-      <ul>
-        {{ range .JobNames }} {{ if . }}
-        <li>
-          <a
-            href="/search?jq=%7B%22where%22%3A+%7B%22%3D%3D%22%3A%5B%7B%22var%22%3A%22name%22%7D%2C+%22{{.}}%22%5D%7D%7D"
-            >== name {{ . }}</a
-          >
-        </li>
-        {{ end }} {{ end }}
-      </ul>
     </div>
     <hr />
     <h2>schedulers</h2>

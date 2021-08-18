@@ -58,6 +58,15 @@ func RegisterRouter(wh WebHandler, r *mux.Router) {
 	r.Handle("/logout", http.HandlerFunc(wh.GetLogout)).Methods(http.MethodGet)
 }
 
+var tmplFuncs = template.FuncMap{
+	"add": func(a, b int) int {
+		return a + b
+	},
+	"sub": func(a, b int) int {
+		return a - b
+	},
+}
+
 // in development, load templates from local filesystem
 // in production, use embeded FS
 //
@@ -69,7 +78,7 @@ func newTemplate(name string, patterns []string) *template.Template {
 		for i := range patterns {
 			resolved[i] = fmt.Sprintf("internal/webserver/%s", patterns[i])
 		}
-		return template.Must(template.New(name).ParseFiles(resolved...))
+		return template.Must(template.New(name).Funcs(tmplFuncs).ParseFiles(resolved...))
 	}
-	return template.Must(template.New(name).ParseFS(templatesFS, patterns...))
+	return template.Must(template.New(name).Funcs(tmplFuncs).ParseFS(templatesFS, patterns...))
 }
