@@ -25,6 +25,10 @@ type WebHandler interface {
 	GetLogin(w http.ResponseWriter, req *http.Request)
 	PostLogin(w http.ResponseWriter, req *http.Request)
 	GetLogout(w http.ResponseWriter, req *http.Request)
+	GetJobCreate(w http.ResponseWriter, req *http.Request)
+	PostJobCreate(w http.ResponseWriter, req *http.Request)
+	GetSchedulerCreate(w http.ResponseWriter, req *http.Request)
+	PostSchedulerCreate(w http.ResponseWriter, req *http.Request)
 }
 
 func NewWebHandler(
@@ -52,6 +56,10 @@ func RegisterRouter(wh WebHandler, r *mux.Router) {
 	r.Handle("/", http.HandlerFunc(wh.GetHome)).Methods(http.MethodGet)
 	r.Handle("/jobs/{jobID}", http.HandlerFunc(wh.GetJob)).Methods(http.MethodGet)
 	r.Handle("/schedulers/{schedulerID}", http.HandlerFunc(wh.GetScheduler)).Methods(http.MethodGet)
+	r.Handle("/jobs:create", http.HandlerFunc(wh.GetJobCreate)).Methods(http.MethodGet)
+	r.Handle("/jobs:create", http.HandlerFunc(wh.PostJobCreate)).Methods(http.MethodPost)
+	r.Handle("/schedulers:create", http.HandlerFunc(wh.GetSchedulerCreate)).Methods(http.MethodGet)
+	r.Handle("/schedulers:create", http.HandlerFunc(wh.PostSchedulerCreate)).Methods(http.MethodPost)
 	r.Handle("/search", http.HandlerFunc(wh.GetSearch)).Methods(http.MethodGet)
 	r.Handle("/login", http.HandlerFunc(wh.GetLogin)).Methods(http.MethodGet)
 	r.Handle("/login", http.HandlerFunc(wh.PostLogin)).Methods(http.MethodPost)

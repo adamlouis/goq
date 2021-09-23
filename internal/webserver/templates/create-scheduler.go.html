@@ -1,0 +1,24 @@
+<html>
+  {{ template "html-header" . }}
+  <body>
+    <div>
+      {{ template "header" . }}
+      <form style="width: fit-content" method="POST" action="/schedulers:create">
+        <div>
+          <textarea style="width: 400px; height: 300px; margin: 10px 0px" name="body" type="text">
+{
+  "id": "thing",
+  "schedule": "* * * * *",
+  "job_name": "SCHEDULED_JOB",
+  "input": {"hello":"world"}
+}
+        </textarea
+          >
+        </div>
+        <div>
+          <input type="submit" />
+        </div>
+      </form>
+    </div>
+  </body>
+</html>
